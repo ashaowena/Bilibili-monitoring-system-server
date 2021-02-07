@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yunchuan.bilibili.dao.UpDetailDAO">
+  <resultMap id="BaseResultMap" type="com.yunchuan.bilibili.entity.UpDetail">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="uid" jdbcType="VARCHAR" property="uid" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="image" jdbcType="VARCHAR" property="image" />
+    <result column="level" jdbcType="TINYINT" property="level" />
+    <result column="official" jdbcType="VARCHAR" property="official" />
+    <result column="vip" jdbcType="VARCHAR" property="vip" />
+    <result column="sign" jdbcType="VARCHAR" property="sign" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, `uid`, `name`, image, `level`, official, vip, sign
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from up_detail
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from up_detail
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.yunchuan.bilibili.entity.UpDetail">
+    insert into up_detail (id, `uid`, `name`, 
+      image, `level`, official, 
+      vip, sign)
+    values (#{id,jdbcType=INTEGER}, #{uid,jdbcType=VARCHAR}, #{name,jdbcType=VARCHAR}, 
+      #{image,jdbcType=VARCHAR}, #{level,jdbcType=TINYINT}, #{official,jdbcType=VARCHAR}, 
+      #{vip,jdbcType=VARCHAR}, #{sign,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.yunchuan.bilibili.entity.UpDetail">
+    insert into up_detail
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="uid != null">
+        `uid`,
+      </if>
+      <if test="name != null">
+        `name`,
+      </if>
+      <if test="image != null">
+        image,
+      </if>
+      <if test="level != null">
+        `level`,
+      </if>
+      <if test="official != null">
+        official,
+      </if>
+      <if test="vip != null">
+        vip,
+      </if>
+      <if test="sign != null">
+        sign,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="uid != null">
+        #{uid,jdbcType=VARCHAR},
+      </if>
+      <if test="name != null">
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="image != null">
+        #{image,jdbcType=VARCHAR},
+      </if>
+      <if test="level != null">
+        #{level,jdbcType=TINYINT},
+      </if>
+      <if test="official != null">
+        #{official,jdbcType=VARCHAR},
+      </if>
+      <if test="vip != null">
+        #{vip,jdbcType=VARCHAR},
+      </if>
+      <if test="sign != null">
+        #{sign,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.yunchuan.bilibili.entity.UpDetail">
+    update up_detail
+    <set>
+      <if test="uid != null">
+        `uid` = #{uid,jdbcType=VARCHAR},
+      </if>
+      <if test="name != null">
+        `name` = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="image != null">
+        image = #{image,jdbcType=VARCHAR},
+      </if>
+      <if test="level != null">
+        `level` = #{level,jdbcType=TINYINT},
+      </if>
+      <if test="official != null">
+        official = #{official,jdbcType=VARCHAR},
+      </if>
+      <if test="vip != null">
+        vip = #{vip,jdbcType=VARCHAR},
+      </if>
+      <if test="sign != null">
+        sign = #{sign,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.yunchuan.bilibili.entity.UpDetail">
+    update up_detail
+    set `uid` = #{uid,jdbcType=VARCHAR},
+      `name` = #{name,jdbcType=VARCHAR},
+      image = #{image,jdbcType=VARCHAR},
+      `level` = #{level,jdbcType=TINYINT},
+      official = #{official,jdbcType=VARCHAR},
+      vip = #{vip,jdbcType=VARCHAR},
+      sign = #{sign,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>
