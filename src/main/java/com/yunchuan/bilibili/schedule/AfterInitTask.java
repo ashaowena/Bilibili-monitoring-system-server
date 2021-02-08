@@ -1,8 +1,7 @@
 package com.yunchuan.bilibili.schedule;
 
 
-import com.yunchuan.bilibili.common.ES.ElasticSearchUtil;
-import com.yunchuan.bilibili.config.ElasticSearchConfig;
+import com.yunchuan.bilibili.common.es.ElasticSearchUtil;
 import com.yunchuan.bilibili.serviver.UpsManagerService;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.ElasticsearchStatusException;
@@ -10,7 +9,6 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.CreateIndexResponse;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;

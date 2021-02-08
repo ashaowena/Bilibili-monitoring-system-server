@@ -1,4 +1,4 @@
-package com.yunchuan.bilibili.common.date;
+package com.yunchuan.bilibili.common.util;
 
 
 import com.alibaba.fastjson.JSONObject;

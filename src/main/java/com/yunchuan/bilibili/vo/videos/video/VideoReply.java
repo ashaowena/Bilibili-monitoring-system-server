@@ -14,7 +14,7 @@ public class VideoReply {
     // 点赞
     private Integer like;
     // 子评论
-    private List<VideoReply> replies;
+//    private List<VideoReply> replies;
     // 是否被删除(0,未删，1,以删)
     private boolean isDeleted;
 

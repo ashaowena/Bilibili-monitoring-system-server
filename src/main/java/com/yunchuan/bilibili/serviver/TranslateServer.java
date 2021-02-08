@@ -1,7 +1,7 @@
 package com.yunchuan.bilibili.serviver;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.yunchuan.bilibili.common.date.DateUtil;
+import com.yunchuan.bilibili.common.util.DateUtil;
 import com.yunchuan.bilibili.dao.UpStatusDAO;
 import com.yunchuan.bilibili.entity.UpStatus;
 import com.yunchuan.bilibili.vo.ChartWrapper;
@@ -253,8 +253,10 @@ public class TranslateServer {
     private List<UpStatus> getUp3DayStatus(String uid) throws Exception {
         Date now = new Date();
         List<UpStatus> upStatuses = new ArrayList<>(3);
+
         // 查找今天的即时数据
         UpStatus upStatus = monitorServer.doMonitorUp(uid,false);
+
         upStatus.setDate(now);
         upStatuses.add(upStatus);
         // 从数据库中查找出前三天的数据

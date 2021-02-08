@@ -12,9 +12,11 @@ import lombok.Data;
 @Data
 @TableName("user")
 public class User implements Serializable {
+
     private Integer id;
 
     private String username;
 
     private static final long serialVersionUID = 1L;
+
 }

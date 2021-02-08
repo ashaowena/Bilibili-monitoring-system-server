@@ -2,11 +2,14 @@ package com.yunchuan.bilibili.controller.monitor;
 
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.yunchuan.bilibili.common.response.R;
 import com.yunchuan.bilibili.entity.User;
 import com.yunchuan.bilibili.serviver.MonitorServer;
 import com.yunchuan.bilibili.vo.MonitorResponseVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -132,24 +135,21 @@ public class MonitorController {
         return s;
     }
 
-
-    @RequestMapping("/blogger.html")
-    public String blogger(HttpServletRequest request, HttpServletResponse response) throws InterruptedException {
+    @ResponseBody
+    @RequestMapping("/blogger")
+    public R blogger(HttpServletRequest request) {
         MonitorResponseVo vo = (MonitorResponseVo) request.getSession().getAttribute("monitorResponse");
         // 获取用户的分组
         monitorServer.getUserGroups(vo);
         // 获取分组下的up
         monitorServer.getMonitorUp(vo);
-        return "blogger";
+
+        String groups = JSONObject.toJSONString(vo.getUpgroups());
+        return R.ok().setData(groups);
     }
 
 
-    @ResponseBody
-    @RequestMapping("/test")
-    public String monitorUpTest() throws InterruptedException {
 
-        return "success";
-    }
 
 
 }

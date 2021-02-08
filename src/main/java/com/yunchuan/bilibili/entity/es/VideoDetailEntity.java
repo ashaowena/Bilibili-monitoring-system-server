@@ -1,6 +1,7 @@
 package com.yunchuan.bilibili.entity.es;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.yunchuan.bilibili.vo.videos.video.VideoReply;
 import lombok.Data;
 
 import java.util.Date;
@@ -51,7 +52,7 @@ public class VideoDetailEntity {
     // 视频标签
     private String tag;
     // 视频评论
-    private VideoReplyWrapper reply_text;
+    private List<VideoReply> reply_text;
     // 弹幕评论
     private List<String> danmaku_text;
 

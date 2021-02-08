@@ -7,16 +7,11 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.sun.org.apache.xerces.internal.parsers.SAXParser;
-import com.sun.org.apache.xml.internal.security.encryption.DocumentSerializer;
-import com.sun.org.apache.xml.internal.security.utils.DOMNamespaceContext;
-import com.sun.xml.internal.txw2.NamespaceResolver;
-import com.sun.xml.internal.ws.util.xml.XMLReaderComposite;
 import com.yunchuan.bilibili.client.RequestFactory;
 import com.yunchuan.bilibili.client.httpclient.HttpUtils;
-import com.yunchuan.bilibili.common.ES.ElasticSearchUtil;
-import com.yunchuan.bilibili.common.date.ReplyUtil;
-import com.yunchuan.bilibili.common.date.TListUtil;
+import com.yunchuan.bilibili.common.es.ElasticSearchUtil;
+import com.yunchuan.bilibili.common.util.ReplyUtil;
+import com.yunchuan.bilibili.common.util.TListUtil;
 import com.yunchuan.bilibili.config.ElasticSearchConfig;
 import com.yunchuan.bilibili.dao.UpGroupDAO;
 import com.yunchuan.bilibili.dao.UpStatusDAO;
@@ -27,7 +22,6 @@ import com.yunchuan.bilibili.entity.User;
 import com.yunchuan.bilibili.entity.UserToGroup;
 import com.yunchuan.bilibili.client.netty.RequestPath;
 import com.yunchuan.bilibili.entity.es.VideoDetailEntity;
-import com.yunchuan.bilibili.entity.es.VideoReplyWrapper;
 import com.yunchuan.bilibili.vo.MonitorResponseVo;
 import com.yunchuan.bilibili.vo.UpDetailResponseVo;
 import com.yunchuan.bilibili.vo.UpGroupVo;
@@ -40,6 +34,7 @@ import com.yunchuan.bilibili.vo.videos.UpVo;
 import com.yunchuan.bilibili.vo.videos.VideoDetailFromList;
 import com.yunchuan.bilibili.vo.videos.video.Stat;
 
+import com.yunchuan.bilibili.vo.videos.video.VideoReply;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.dom4j.Document;
@@ -51,30 +46,18 @@ import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.TermQueryBuilder;
-import org.elasticsearch.index.reindex.DeleteByQueryRequest;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.w3c.dom.NodeList;
 
 
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathFactory;
 import java.io.ByteArrayInputStream;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-
-import static com.sun.xml.internal.ws.util.xml.XMLReaderComposite.State.StartTag;
 
 
 @SuppressWarnings("rawtypes")
@@ -258,7 +241,9 @@ public class MonitorServer {
         }
         BulkResponse bulk = esClient.bulk(bulkAddRequest, ElasticSearchConfig.COMMON_OPTIONS);
         BulkItemResponse[] items = bulk.getItems();
-
+        for (BulkItemResponse item : items) {
+            System.out.println("response:" + item.getFailureMessage());
+        }
 
     }
 
@@ -378,11 +363,11 @@ public class MonitorServer {
                     HttpUriRequest request = RequestFactory.getApacheRequest(RequestPath.VIDEO_REPLY, bvid.getAid(), 1);
                     String content = client.httpsGet(request);
                     JSONObject jsonObject = JSONObject.parseObject(content);
-                    VideoReplyWrapper replyWrapper = ReplyUtil.getVideoReplies(content);
+                    List<VideoReply> videoReplies = ReplyUtil.getVideoReplies(content);
                     Integer count = jsonObject.getJSONObject("data").getJSONObject("page").getInteger("count");
                     videoReplyPageHelper(syncSet, bvid, count);
                     // 需要保证线程安全性
-                    ReplyUtil.pageableAdapt(bvid, replyWrapper);
+                    ReplyUtil.pageableAdapt(bvid, videoReplies);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -401,8 +386,8 @@ public class MonitorServer {
                     HttpUriRequest request2 = RequestFactory.getApacheRequest(RequestPath.VIDEO_REPLY, bvid.getAid(), page[0]);
                     System.out.println("reply:" + request2);
                     String content0 = client.httpsGet(request2);
-                    VideoReplyWrapper pageReplyWrapper = ReplyUtil.getVideoReplies(content0);
-                    ReplyUtil.pageableAdapt(bvid, pageReplyWrapper);
+                    List<VideoReply> videoReplies = ReplyUtil.getVideoReplies(content0);
+                    ReplyUtil.pageableAdapt(bvid, videoReplies);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

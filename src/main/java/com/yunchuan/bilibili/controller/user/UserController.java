@@ -3,6 +3,7 @@ package com.yunchuan.bilibili.controller.user;
 
 
 import com.alibaba.fastjson.JSON;
+import com.yunchuan.bilibili.common.response.R;
 import com.yunchuan.bilibili.serviver.LoginService;
 import com.yunchuan.bilibili.serviver.MonitorServer;
 import com.yunchuan.bilibili.vo.MonitorResponseVo;
@@ -17,6 +18,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
+import java.util.Map;
 
 
 @Controller
@@ -34,22 +36,16 @@ public class UserController {
 
     @ResponseBody
     @RequestMapping("login")
-    public String loginByPassword(@RequestParam("username") String username, @RequestParam("password") String password , HttpServletRequest request) throws InterruptedException {
-        MonitorResponseVo vo = loginService.login(username, password);
-        HashMap<String, Object> data = new HashMap<>();
+    public R loginByPassword(@RequestBody Map<String,String> data, HttpServletRequest request) {
+        MonitorResponseVo vo = loginService.login(data.get("username"), data.get("password"));
         if (vo != null) {
-            request.getSession().setAttribute("monitorResponse",vo);
             // 登陆成功，跳转业务
-            data.put("code",200);
-            data.put("status",true);
-            String s = JSON.toJSONString(data);
-            return s;
+            request.getSession().setAttribute("monitorResponse",vo);
+            String response = JSON.toJSONString(vo.getUser());
+            return R.ok().setData(response);
         }
-        data.put("status",false);
-        data.put("code",400);
-        data.put("msg","用户名或密码错误!");
-        String s = JSON.toJSONString(data);
-        return s;
+
+        return R.error( "账号密码错误！");
 
     }
 
