@@ -159,6 +159,7 @@ public class MonitorServer {
                     // 转化为增长量
                     translated = translateServer.translate(upVo.getUid());
                 } catch (Exception e) {
+                    System.out.println(e.getMessage());
                     log.warn("获取信息错误");
                 }
                 upVo.setInfo(upInfo);
@@ -211,6 +212,7 @@ public class MonitorServer {
         //6、归并所有视频信息
         AggVideoResult result = aggVideoDetails(sortableBvids);
         BeanUtils.copyProperties(result, upStatus, "view", "like");
+        upStatus.setDate(new Date());
         return upStatus;
     }
 
@@ -546,7 +548,8 @@ public class MonitorServer {
         for (UpGroup upGroup : upGroups) {
             if (upGroup.getId().equals(groupId)) {
                 String ups = upGroup.getUp();
-                upGroup.setUp(ups + ";" + uid);
+                String newUps = ups.replace(";" + uid,"");
+                upGroup.setUp(newUps + ";" + uid);
                 upGroupDAO.updateById(upGroup);
             } else {
                 String ups = upGroup.getUp();
@@ -558,6 +561,17 @@ public class MonitorServer {
 
     }
 
+    public List<UpDetailResponseVo> getUpDetails(List<UpGroupVo> upgroups) {
+        List<UpDetailResponseVo> vos = new ArrayList<>();
+        for (UpGroupVo upgroup : upgroups) {
+            List<UpVo> upVos = upgroup.getUpVos();
+            for (UpVo upVo0 : upVos) {
+                UpDetailResponseVo upDetail = getUpDetail(upVo0, null);
+                vos.add(upDetail);
+            }
+        }
+        return vos;
+    }
 
     public UpDetailResponseVo getUpDetail(UpVo upVo, Integer period) {
         UpDetailResponseVo detail = new UpDetailResponseVo();
@@ -566,9 +580,13 @@ public class MonitorServer {
         detail.setUpStatus(newStatus);
         UpAvgStatus avgStatus = getUpAvgStatus(newStatus);
         detail.setUpAvgStatus(avgStatus);
-        List<UpStatusAfterTranslatedVo> translatedVos = translateServer.smartTranslate(upVo.getUid(), period);
-        detail.setPeriodUpStatus(translatedVos);
+//        getTab(upVo, period, detail);
         return detail;
+    }
+
+    public List<UpStatusAfterTranslatedVo> getTab(String uid, Integer period) {
+        List<UpStatusAfterTranslatedVo> translatedVos = translateServer.smartTranslate(uid, period);
+        return translatedVos;
     }
 
     private UpAvgStatus getUpAvgStatus(UpStatus upStatus) {

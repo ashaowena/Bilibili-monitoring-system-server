@@ -4,9 +4,12 @@ package com.yunchuan.bilibili.controller.monitor;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.yunchuan.bilibili.common.response.R;
+import com.yunchuan.bilibili.entity.UpStatus;
 import com.yunchuan.bilibili.entity.User;
 import com.yunchuan.bilibili.serviver.MonitorServer;
 import com.yunchuan.bilibili.vo.MonitorResponseVo;
+import com.yunchuan.bilibili.vo.up.UpInfoVo;
+import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -74,51 +77,36 @@ public class MonitorController {
 
     @ResponseBody
     @RequestMapping("/moveMonitorGroup")
-    public String moveMonitorGroup(Integer groupId,String uid, HttpSession session) {
+    public R moveMonitorGroup(Integer groupId,String uid, HttpSession session) {
         MonitorResponseVo vo = (MonitorResponseVo) session.getAttribute("monitorResponse");
-        Map<String, Object> data = new HashMap<>();
         if (vo != null) {
             User user = vo.getUser();
             monitorServer.moveMonitorGroup(user,groupId,uid);
-            data.put("code", 200);
-            data.put("message", "success");
-            String s = JSON.toJSONString(data);
-            return s;
+            return R.ok();
         }
-        data.put("code", 0);
-        data.put("msg", "fail");
-        String s = JSON.toJSONString(data);
-        return s;
+        return R.error(HttpStatus.SC_FORBIDDEN,"请先登录！");
     }
 
     @ResponseBody
-    @RequestMapping("/addMonitorUp")
-    public String addMonitorUp(@RequestParam(defaultValue = "0") Integer groupId, String up, HttpSession session) throws Exception {
+    @RequestMapping("/addUp")
+    public R addMonitorUp(@RequestParam(defaultValue = "0") Integer groupId,@RequestParam("uid") String up, HttpSession session) throws Exception {
         MonitorResponseVo vo = (MonitorResponseVo) session.getAttribute("monitorResponse");
         Map<String, Object> data = new HashMap<>();
         if (vo != null) {
             User user = vo.getUser();
             int i = monitorServer.addMonitorUp(groupId, up, user);
             if (i == 200) {
-                data.put("code", 200);
-                data.put("msg", "success");
-                String s = JSON.toJSONString(data);
-                return s;
+                return R.ok();
             }
-            data.put("code", 0);
-            data.put("msg", "无此用户");
-            String s = JSON.toJSONString(data);
-            return s;
+            return R.error("无此用户！");
         }
-        data.put("code", 0);
-        data.put("msg", "fail");
-        String s = JSON.toJSONString(data);
-        return s;
+        return R.error(HttpStatus.SC_FORBIDDEN,"请先登录！");
     }
+
 
     @ResponseBody
     @RequestMapping("/deleteMonitorUp")
-    public String deleteMonitorUp(String uid, HttpSession session) throws Exception {
+    public String deleteMonitorUp(String uid, HttpSession session) {
         MonitorResponseVo vo = (MonitorResponseVo) session.getAttribute("monitorResponse");
         Map<String, Object> data = new HashMap<>();
         if (vo != null) {
@@ -138,16 +126,34 @@ public class MonitorController {
     @ResponseBody
     @RequestMapping("/blogger")
     public R blogger(HttpServletRequest request) {
+
         MonitorResponseVo vo = (MonitorResponseVo) request.getSession().getAttribute("monitorResponse");
+        if (vo == null) {
+            return R.error(HttpStatus.SC_FORBIDDEN,"请先登录!");
+        }
+
         // 获取用户的分组
         monitorServer.getUserGroups(vo);
         // 获取分组下的up
         monitorServer.getMonitorUp(vo);
 
-        String groups = JSONObject.toJSONString(vo.getUpgroups());
-        return R.ok().setData(groups);
+        return R.ok().setData(vo.getUpgroups());
     }
 
+//    @ResponseBody
+//    @RequestMapping("/updateGroup")
+//    public R updateGroup(HttpServletRequest request) {
+//        MonitorResponseVo vo = (MonitorResponseVo) request.getSession().getAttribute("monitorResponse");
+//        if (vo == null) {
+//            return R.error(400,"请先登录!");
+//        }
+//
+//        // 获取用户的分组
+//        monitorServer.getUserGroups(vo);
+//
+//
+//        return R.ok().setData(vo.getUpgroups());
+//    }
 
 
 

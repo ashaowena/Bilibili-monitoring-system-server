@@ -137,7 +137,7 @@ public class TranslateServer {
             Date before = DateUtil.getBeforeDate(period.PERIOD * 3 - 1);
             Date now = DateUtil.getNowDate();
             List<UpStatus> upStatuses = upStatusDAO.selectList(new QueryWrapper<UpStatus>().eq("uid", uid).between("date", before, now).orderByDesc("date"));
-            if (upStatuses != null && upStatuses.size() < period.PERIOD * 2) {
+            if (upStatuses == null || upStatuses.size() < period.PERIOD * 2) {
                 log.info("不足两个周期，无法计算");
                 return null;
             }
@@ -251,13 +251,18 @@ public class TranslateServer {
     }
 
     private List<UpStatus> getUp3DayStatus(String uid) throws Exception {
-        Date now = new Date();
+
         List<UpStatus> upStatuses = new ArrayList<>(3);
 
         // 查找今天的即时数据
-        UpStatus upStatus = monitorServer.doMonitorUp(uid,false);
+//        UpStatus upStatus = monitorServer.doMonitorUp(uid,false);
 
-        upStatus.setDate(now);
+        UpStatus upStatus = upStatusDAO.selectOne(new QueryWrapper<UpStatus>().eq("uid",uid).eq("date", DateUtil.getNowDate()));
+        if (upStatus == null) {
+            log.error("获取今日数据失败");
+            return null;
+        }
+
         upStatuses.add(upStatus);
         // 从数据库中查找出前三天的数据
         LocalDate localDate = LocalDate.now();

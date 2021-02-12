@@ -1,22 +1,23 @@
 package com.yunchuan.bilibili.controller.monitor;
 
 
-import com.alibaba.fastjson.JSON;
+
+import com.sun.deploy.net.HttpUtils;
+import com.yunchuan.bilibili.common.response.R;
 import com.yunchuan.bilibili.entity.UpStatus;
 import com.yunchuan.bilibili.serviver.MonitorServer;
 import com.yunchuan.bilibili.serviver.TranslateServer;
 import com.yunchuan.bilibili.vo.*;
+import com.yunchuan.bilibili.vo.up.UpInfoVo;
 import com.yunchuan.bilibili.vo.videos.UpVo;
+import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.util.Date;
 import java.util.List;
 
 
@@ -29,25 +30,45 @@ public class UpDetailController {
     @Autowired
     TranslateServer translateServer;
 
-    @RequestMapping("/detail/{uid}")
-    public String detail(@PathVariable("uid") String uid , HttpSession session) throws Exception {
+    @ResponseBody
+    @RequestMapping("/searchUp")
+    public R searchUp(@RequestParam("uid") String up) throws Exception {
+        UpInfoVo upInfo = monitorServer.getUpInfo(up);
+        if (upInfo != null) {
+            return R.ok().setData(upInfo);
+        }
+        return R.error("无此用户!");
+
+    }
+
+    @ResponseBody
+    @RequestMapping("/details")
+    public R detail(HttpSession session) {
         MonitorResponseVo vo = (MonitorResponseVo)session.getAttribute("monitorResponse");
+        if (vo == null) {
+            return R.error(HttpStatus.SC_FORBIDDEN,"请先登录");
+        }
         List<UpGroupVo> upgroups = vo.getUpgroups();
-        UpVo upVo = null;
-        for (UpGroupVo upgroup : upgroups) {
-            List<UpVo> upVos = upgroup.getUpVos();
-            for (UpVo upVo0 : upVos) {
-                if (upVo0.getUid().equalsIgnoreCase(uid)) {
-                    upVo = upVo0;
-                }
-            }
-        }
-        if (upVo == null) {
-            upVo = new UpVo();
-        }
-        UpDetailResponseVo upDetail = monitorServer.getUpDetail(upVo,null);
-        session.setAttribute("UpDetail",upDetail);
-        return "detail";
+
+//        for (UpGroupVo upgroup : upgroups) {
+//            List<UpVo> upVos = upgroup.getUpVos();
+//            for (UpVo upVo0 : upVos) {
+//                if (upVo0.getUid().equalsIgnoreCase(uid)) {
+//                    upVo = upVo0;
+//                }
+//            }
+//        }
+
+
+        List<UpDetailResponseVo> upDetails = monitorServer.getUpDetails(upgroups);
+        return R.ok().setData(upDetails);
+    }
+
+    @ResponseBody
+    @RequestMapping("/periodTabDetail")
+    public R getPeriodTabDetail(@RequestParam Integer period,@RequestParam String uid) {
+        List<UpStatusAfterTranslatedVo> vos = monitorServer.getTab(uid, period);
+        return R.ok().setData(vos);
     }
 
     @ResponseBody
