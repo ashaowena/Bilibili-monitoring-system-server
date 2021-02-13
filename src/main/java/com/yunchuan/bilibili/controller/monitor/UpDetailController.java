@@ -73,12 +73,12 @@ public class UpDetailController {
 
     @ResponseBody
     @RequestMapping("/periodDetail")
-    public PeriodDetailResponseVo getPeriodDetail(@RequestParam Integer period,@RequestParam String uid ,HttpSession session) {
+    public R getPeriodDetail(@RequestParam Integer period,@RequestParam String uid ,HttpSession session) {
         MonitorResponseVo vo = (MonitorResponseVo)session.getAttribute("monitorResponse");
         PeriodDetailResponseVo periodDetailResponseVo = new PeriodDetailResponseVo();
         // 设置概况数据
-        List<UpStatusAfterTranslatedVo> translatedVos = translateServer.smartTranslate(uid, period);
-        periodDetailResponseVo.setTranslatedVos(translatedVos);
+//        List<UpStatusAfterTranslatedVo> translatedVos = translateServer.smartTranslate(uid, period);
+//        periodDetailResponseVo.setTranslatedVos(translatedVos);
         // 设置图表总量数据
         List<UpStatus> dailyStatus = translateServer.getDailyStatus(uid, period);
         ChartWrapper chartWrapper = translateServer.translateToChar(dailyStatus);
@@ -87,7 +87,7 @@ public class UpDetailController {
         List<UpStatusAfterTranslatedVo> dailyTranslatedVos = translateServer.getDailyTranslated(dailyStatus,period);
         ChartWrapper incChartWrapper = translateServer.translateToIncChar(dailyTranslatedVos);
         periodDetailResponseVo.setDailyTranslatedVos(incChartWrapper);
-        return periodDetailResponseVo;
+        return R.ok().setData(periodDetailResponseVo);
     }
 
     @ResponseBody

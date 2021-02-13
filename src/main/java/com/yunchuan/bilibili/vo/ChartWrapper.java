@@ -1,14 +1,8 @@
 package com.yunchuan.bilibili.vo;
-
-import com.alibaba.fastjson.annotation.JSONField;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.yunchuan.bilibili.entity.UpStatus;
 import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Data
