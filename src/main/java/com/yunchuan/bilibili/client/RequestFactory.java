@@ -1,6 +1,6 @@
 package com.yunchuan.bilibili.client;
 
-import com.sun.javafx.scene.shape.PathUtils;
+
 import com.yunchuan.bilibili.client.netty.RequestPath;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.*;

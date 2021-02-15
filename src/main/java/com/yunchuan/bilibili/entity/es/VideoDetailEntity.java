@@ -39,10 +39,10 @@ public class VideoDetailEntity {
     private String title;
 
     private String description;
-    // 是否自制 1、自制 2、转载
+    // 是否自制 0、转载 1、自制
     private Integer copyright;
-    // 是否联合创作
-    private Boolean is_union_video;
+    // 是否联合创作  0:否 1:是
+    private Integer is_union_video;
 
     private String length;
 
@@ -50,7 +50,7 @@ public class VideoDetailEntity {
     // 视频分区
     private String tName;
     // 视频标签
-    private String tag;
+    private String[] tag;
     // 视频评论
     private List<VideoReply> reply_text;
     // 弹幕评论

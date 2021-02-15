@@ -4,7 +4,6 @@
 package com.yunchuan.bilibili.vo.videos.video;
 
 import lombok.Data;
-
 import java.util.Date;
 
 /**
@@ -33,6 +32,8 @@ public class Stat {
     private Integer share;
 
     private Integer like;
+    // 是否自制 0：不是 1：是
+    private Integer is_cooperation;
 
 
 }

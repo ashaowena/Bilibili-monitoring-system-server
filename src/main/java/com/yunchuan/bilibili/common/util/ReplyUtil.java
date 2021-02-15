@@ -59,11 +59,15 @@ public class ReplyUtil {
             VideoReply videoReply = new VideoReply();
             JSONObject item = array.getJSONObject(i);
             String message = item.getJSONObject("content").getString("message");
-            Long rpid = item.getLong("rpid");
+            Integer mid = item.getInteger("mid");
+            Integer oid = item.getInteger("oid");
+            Integer level = item.getJSONObject("member").getJSONObject("level_info").getInteger("current_level");
             Integer like = item.getInteger("like");
             // 递归获取评论下的子评论
             parseReplies(item.getJSONArray("replies"), replies);
-            videoReply.setRpid(rpid);
+            videoReply.setMid(mid);
+            videoReply.setOid(oid);
+            videoReply.setCurrent_level(level);
             videoReply.setMessage(message);
             videoReply.setLike(like);
             replies.add(videoReply);

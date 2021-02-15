@@ -319,8 +319,16 @@ public class MonitorServer {
                     JSONObject jsonObject = JSONObject.parseObject(content);
                     Stat stat = jsonObject.getJSONObject("data").getObject("stat", Stat.class);
                     BeanUtils.copyProperties(stat, bvid);
+
                     String cid = jsonObject.getJSONObject("data").getString("cid");
+                    Date ctime = jsonObject.getJSONObject("data").getDate("pubdate");
+                    Integer copyright = jsonObject.getJSONObject("data").getInteger("copyright");
+                    Integer cooperation = jsonObject.getJSONObject("data").getJSONObject("rights").getInteger("is_cooperation");
+
+                    bvid.setCopyright(copyright);
                     bvid.setCid(cid);
+                    bvid.setCtime(ctime);
+                    bvid.setIs_union_video(cooperation);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -341,13 +349,13 @@ public class MonitorServer {
                     String content = client.httpsGet(request);
                     JSONObject tag = JSON.parseObject(content);
                     JSONArray datas = tag.getJSONArray("data");
-                    StringBuilder stringBuilder = new StringBuilder();
+                    String[] arr = new String[datas.size()];
                     for (int i = 0; i < datas.size(); i++) {
                         JSONObject data = datas.getJSONObject(i);
                         String tag_name = data.getString("tag_name");
-                        stringBuilder.append(tag_name + ";");
+                        arr[i] = tag_name;
                     }
-                    bvid.setTag(stringBuilder.toString());
+                    bvid.setTag(arr);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
