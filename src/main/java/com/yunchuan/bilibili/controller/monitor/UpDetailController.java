@@ -91,9 +91,9 @@ public class UpDetailController {
     }
 
     @ResponseBody
-    @RequestMapping(value = "/bfs/face/{path}/{index}",produces = "image/jpeg")
-    public byte[] getImage(@PathVariable String path,@PathVariable String index) throws Exception {
-        byte[] face = monitorServer.getFace(path,index);
+    @RequestMapping(value = "/proxyImg",produces = "image/jpeg")
+    public byte[] getImage(@RequestParam String path) throws Exception {
+        byte[] face = monitorServer.getFace(path);
         return face;
     }
 

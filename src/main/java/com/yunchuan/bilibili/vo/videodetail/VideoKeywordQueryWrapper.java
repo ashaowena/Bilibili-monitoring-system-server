@@ -13,9 +13,9 @@ public class VideoKeywordQueryWrapper {
     private Integer uid;
     // 视频分类
     private String tName;
-    // 是否团队视频 0：不是 1：是
+    // 是否团队视频 0：不查找 1：是
     private Integer is_union_video;
-    // 是否自制 0：不是 1：是
+    // 是否自制 0：不查找 1：是
     private Integer copyright;
 
     private Date begin;

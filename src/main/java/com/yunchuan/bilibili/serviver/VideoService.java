@@ -2,6 +2,7 @@ package com.yunchuan.bilibili.serviver;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.mysql.cj.x.protobuf.MysqlxDatatypes;
 import com.yunchuan.bilibili.common.constant.VideoQueryType;
 import com.yunchuan.bilibili.common.es.ElasticSearchUtil;
 import com.yunchuan.bilibili.common.util.DateUtil;
@@ -22,9 +23,14 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.terms.ParsedTerms;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.aggregations.metrics.ParsedAvg;
 import org.elasticsearch.search.aggregations.metrics.ParsedPercentiles;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -130,15 +136,18 @@ public class VideoService {
     }
 
     public List<VideoDetailEntity> getVideoList(VideoKeywordQueryWrapper wrapper) throws IOException {
-
+        List<VideoDetailEntity> entities = new ArrayList<>();
         SearchRequest request = videoListRequestBuilder(wrapper);
         SearchResponse response = esClient.search(request, ElasticSearchConfig.COMMON_OPTIONS);
         SearchHit[] hits = response.getHits().getHits();
         for (SearchHit hit : hits) {
-            System.out.println(hit.getSourceAsMap());
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("source",hit.getSourceAsMap());
+            VideoDetailEntity entity = jsonObject.getObject("source", VideoDetailEntity.class);
+            entities.add(entity);
         }
 
-        return null;
+        return entities;
     }
 
     private SearchRequest videoListRequestBuilder(VideoKeywordQueryWrapper wrapper) {
@@ -155,37 +164,42 @@ public class VideoService {
         if (wrapper.getEnd() != null) {
             boolQuery.filter(QueryBuilders.rangeQuery("ctime").lte(wrapper.getEnd().getTime() / 1000));
         }
-        if (wrapper.getIs_union_video() != null) {
-            boolQuery.filter(QueryBuilders.termQuery("is_union_video", wrapper.getIs_union_video()));
+        if (wrapper.getIs_union_video() != null && wrapper.getIs_union_video() != 0) {
+            boolQuery.filter(QueryBuilders.termQuery("is_union_video", 1));
         }
-        if (wrapper.getCopyright() != null) {                           // 这里强转解决编译器报多方法匹配异常BUG
-            boolQuery.filter(QueryBuilders.termsQuery("copyright", ((Object)wrapper.getCopyright())));
+        if (wrapper.getCopyright() != null && wrapper.getCopyright() != 0) {     // 这里强转解决编译器报多方法匹配异常BUG
+            boolQuery.filter(QueryBuilders.termsQuery("copyright", (Object) 1));
         }
 
-        if (wrapper.getKeywordWrapper() != null) {
+        if (wrapper.getKeywordWrapper() != null && !StringUtils.isEmpty(wrapper.getKeywordWrapper().getKeyword())) {
             String keyword = wrapper.getKeywordWrapper().getKeyword();
+            BoolQueryBuilder keywordQuery = QueryBuilders.boolQuery();
             switch (wrapper.getKeywordWrapper().getSearchType()) {
                 case VideoQueryType.TOTAL:
-                    boolQuery.should(QueryBuilders.matchQuery("tag", keyword));
-                    boolQuery.should(QueryBuilders.matchQuery("description", keyword));
-                    boolQuery.should(QueryBuilders.matchQuery("danmaku_text", keyword));
-                    boolQuery.should(QueryBuilders.matchQuery("tag", keyword));
-                    boolQuery.should(QueryBuilders.matchQuery("reply_text.message",keyword));
+                    keywordQuery.should(QueryBuilders.matchQuery("tag", keyword));
+                    keywordQuery.should(QueryBuilders.matchQuery("description", keyword));
+                    keywordQuery.should(QueryBuilders.matchQuery("danmaku_text", keyword));
+                    keywordQuery.should(QueryBuilders.matchQuery("tag", keyword));
+                    keywordQuery.should(QueryBuilders.matchQuery("reply_text.message",keyword));
+
+                    break;
                 case VideoQueryType.TITLE_AND_DESCRIPTION:
-                    boolQuery.should(QueryBuilders.matchQuery("tag", keyword));
-                    boolQuery.should(QueryBuilders.matchQuery("description",  keyword));
+                    keywordQuery.should(QueryBuilders.matchQuery("title", keyword));
+                    keywordQuery.should(QueryBuilders.matchQuery("description",  keyword));
                     break;
                 case VideoQueryType.DANMAKU:
-                    boolQuery.should(QueryBuilders.matchQuery("danmaku_text", keyword));
+                    keywordQuery.should(QueryBuilders.matchQuery("danmaku_text", keyword));
                     break;
                 case VideoQueryType.TAG:
-                    boolQuery.should(QueryBuilders.matchQuery("tag", keyword));
+                    keywordQuery.should(QueryBuilders.matchQuery("tag", keyword));
                     break;
                 case VideoQueryType.REPLY:
-                    boolQuery.should(QueryBuilders.matchQuery("reply_text.message",keyword));
+                    keywordQuery.should(QueryBuilders.matchQuery("reply_text.message",keyword));
+                    break;
                 default:
                     throw new IllegalStateException("Unexpected value: " + wrapper.getKeywordWrapper().getSearchType());
             }
+            boolQuery.must(keywordQuery);
         }
 
         SearchSourceBuilder builder = new SearchSourceBuilder();
@@ -204,8 +218,66 @@ public class VideoService {
         }
     }
 
-    public List<String> getVideoTName() {
-        return null;
+    private void order(SearchSourceBuilder searchSourceBuilder, Integer type) {
+        if (type == null || type == 0) {
+            searchSourceBuilder.sort("ctime", SortOrder.DESC);
+        } else if (type == 1) {
+
+        } else {
+            searchSourceBuilder.sort("view", SortOrder.DESC);
+        }
+    }
+
+    public List<String> getVideosTName(String uid) throws IOException {
+
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        boolQuery.filter(QueryBuilders.termQuery("mid", uid));
+
+        TermsAggregationBuilder term_agg = AggregationBuilders.terms("tag").field("tag");
+
+
+        SearchSourceBuilder builder = new SearchSourceBuilder();
+
+        builder.query(boolQuery);
+        builder.aggregation(term_agg);
+
+        SearchResponse response = esClient.search(new SearchRequest(ElasticSearchUtil.VIDEO_DETAIL_INDEX).source(builder), ElasticSearchConfig.COMMON_OPTIONS);
+
+        Aggregations aggregations = response.getAggregations();
+        ParsedTerms tag = aggregations.get("tag");
+
+        List<String> tags = new ArrayList<>(16);
+        for (Terms.Bucket bucket : tag.getBuckets()) {
+            tags.add(bucket.getKeyAsString());
+        }
+
+        return tags;
+    }
+
+
+    public List<String> getVideosTagsName(String  uid) throws IOException {
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        boolQuery.filter(QueryBuilders.termQuery("mid", uid));
+
+        TermsAggregationBuilder term_agg = AggregationBuilders.terms("tName").field("tName");
+
+
+        SearchSourceBuilder builder = new SearchSourceBuilder();
+
+        builder.query(boolQuery);
+        builder.aggregation(term_agg);
+
+        SearchResponse response = esClient.search(new SearchRequest(ElasticSearchUtil.VIDEO_DETAIL_INDEX).source(builder), ElasticSearchConfig.COMMON_OPTIONS);
+
+        Aggregations aggregations = response.getAggregations();
+        ParsedTerms tName = aggregations.get("tName");
+
+        List<String> tNames = new ArrayList<>(16);
+        for (Terms.Bucket bucket : tName.getBuckets()) {
+            tNames.add(bucket.getKeyAsString());
+        }
+
+        return tNames;
     }
 }
 

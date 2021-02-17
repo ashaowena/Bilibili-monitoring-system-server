@@ -66,7 +66,7 @@ public class RequestFactory {
     /**
      * 用户头像
      */
-    public static final String FACE = "/bfs/face/";
+    public static final String FACE = "";
 
     /**
      * 评论
@@ -214,7 +214,7 @@ public class RequestFactory {
         }
 
         if (path == RequestPath.FACE) {
-            return path + id;
+            return path + "";
         }
 
         if (path == RequestPath.VIDEO_REPLY) {

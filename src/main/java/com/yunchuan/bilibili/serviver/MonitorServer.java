@@ -478,12 +478,13 @@ public class MonitorServer {
         // 2、获取基本昵称、性别、头像、等级、生日（暂不开发）等基本信息
         HttpUriRequest infoRequest = RequestFactory.getApacheRequest(RequestPath.UP_INFO_PATH, up);
         String infoResponse = client.httpsGet(infoRequest);
-        Map<String, String> infoMap = JSONObject.parseObject(infoResponse, new TypeReference<Map<String, String>>() {
-        });
-        if (Integer.parseInt(infoMap.get("code")) == 0) {
-            UpInfoVo upInfoVo = JSONObject.parseObject(infoMap.get("data"), new TypeReference<UpInfoVo>() {
-            });
-            upInfoVo.setFace(upInfoVo.getFace().substring(19) + "/" + upInfoVo.getFace().charAt(8) + "");
+        JSONObject infoMap = JSONObject.parseObject(infoResponse);
+        if (infoMap.getInteger("code") == 0) {
+            UpInfoVo upInfoVo = infoMap.getObject("data",UpInfoVo.class);
+            String vip = infoMap.getJSONObject("data").getJSONObject("vip").getJSONObject("label").getString("text");
+            String official = infoMap.getJSONObject("data").getJSONObject("official").getString("title");
+            upInfoVo.setVip(vip);
+            upInfoVo.setOfficial(official);
             return upInfoVo;
         }
         log.warn("获取用户详细信息失败");
@@ -612,8 +613,8 @@ public class MonitorServer {
         return avgStatus;
     }
 
-    public byte[] getFace(String path, String index) throws Exception {
-        HttpUriRequest request = RequestFactory.getApacheRequest(RequestPath.FACE, path, "http://i" + index + ".hdslb.com");
+    public byte[] getFace(String path) throws Exception {
+        HttpUriRequest request = RequestFactory.getApacheRequest(RequestPath.FACE,null, path);
         byte[] bytes = client.httpsGetByte(request);
         return bytes;
     }

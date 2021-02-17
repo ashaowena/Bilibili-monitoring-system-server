@@ -22,11 +22,11 @@ public class UpInfoVo {
     // 视频总数   *
     private Integer videos;
     // 会员类型
-    private VipInfoVo vip;
+    private String vip;
     // 粉丝总数   *
     private Integer fans;
     // 最新更新时间
     private Date date;
     // 认证类型
-    private JSONObject official;
+    private String official;
 }

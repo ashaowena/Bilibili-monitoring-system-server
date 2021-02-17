@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
+
 
 @Controller
 public class VideoListController {
@@ -35,25 +35,26 @@ public class VideoListController {
     }
 
     /**
-     * 作品分类
+     * 作品标签
      * @return
      */
     @ResponseBody
     @RequestMapping("/VideoTName")
-    public R showVideoTName() {
-        List<String> tName = videoService.getVideoTName();
-        return R.ok().setData(tName);
+    public R showVideosTag(@RequestParam String uid) throws IOException {
+        List<String> tags = videoService.getVideosTName(uid);
+        return R.ok().setData(tags);
     }
 
+
     /**
-     * 视频标签
+     * 视频分类
      * @return
      */
     @ResponseBody
     @RequestMapping("/VideoTag")
-    public R showVideoTag() {
-
-        return R.ok();
+    public R showVideosTname(@RequestParam String uid) throws IOException {
+        List<String> tags = videoService.getVideosTagsName(uid);
+        return R.ok().setData(tags);
     }
 
     /**
@@ -62,7 +63,6 @@ public class VideoListController {
      * @param type
      * @param period
      * @return
-     * @throws IOException
      */
     @ResponseBody
     @RequestMapping("/ProductionsAbstract")

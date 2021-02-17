@@ -91,7 +91,6 @@ public class MonitorController {
     @RequestMapping("/addUp")
     public R addMonitorUp(@RequestParam(defaultValue = "0") Integer groupId,@RequestParam("uid") String up, HttpSession session) throws Exception {
         MonitorResponseVo vo = (MonitorResponseVo) session.getAttribute("monitorResponse");
-        Map<String, Object> data = new HashMap<>();
         if (vo != null) {
             User user = vo.getUser();
             int i = monitorServer.addMonitorUp(groupId, up, user);
