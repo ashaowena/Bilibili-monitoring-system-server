@@ -25,4 +25,17 @@ public class VideosAbstractResponseVo {
     private Integer share;
     // 点赞
     private Integer like;
+
+    public static VideosAbstractResponseVo init() {
+        VideosAbstractResponseVo vo = new VideosAbstractResponseVo();
+        vo.productions = 0;
+        vo.view = 0;
+        vo.danmaku = 0;
+        vo.reply = 0;
+        vo.favorite = 0;
+        vo.coin = 0;
+        vo.share = 0;
+        vo.like = 0;
+        return vo;
+    }
 }

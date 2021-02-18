@@ -33,11 +33,15 @@ public class ElasticSearchUtil {
             "                },\n" +
             "                \"danmaku_text\": {\n" +
             "                    \"type\": \"text\",\n" +
-            "\t\t\t\t\t\"fielddata\": true\n" +
+            "\t\t\t\t\t\"fielddata\": true,\n" +
+            "\t\t\t\t\t\"analyzer\": \"ik_max_word\",\n" +
+            "\t\t\t\t\t\"search_analyzer\": \"ik_max_word\"\n" +
             "                },\n" +
             "                \"description\": {\n" +
             "                    \"type\": \"text\",\n" +
-            "\t\t\t\t\t\"fielddata\": true\n" +
+            "\t\t\t\t\t\"fielddata\": true,\n" +
+            "\t\t\t\t\t\"analyzer\": \"ik_max_word\",\n" +
+            "\t\t\t\t\t\"search_analyzer\": \"ik_max_word\"\n" +
             "                },\n" +
             "                \"favorite\": {\n" +
             "                    \"type\": \"integer\"\n" +
@@ -63,9 +67,12 @@ public class ElasticSearchUtil {
             "\t\t\t\t\t\t\"current_level\": {\"type\": \"integer\"},\n" +
             "\t\t\t\t\t\t\"oid\": {\"type\": \"integer\"},\n" +
             "\t\t\t\t\t\t\"message\": {\"type\": \"text\",\n" +
-            "\t\t\t\t\t\t\t\t\t\"fielddata\": true\n" +
+            "\t\t\t\t\t\t\t\t\t\"fielddata\": true,\n" +
+            "\t\t\t\t\t\t\t\t\t\"analyzer\": \"ik_max_word\",\n" +
+            "\t\t\t\t\t\t\t\t\t\"search_analyzer\": \"ik_max_word\"\n" +
             "\t\t\t\t\t\t\t\t},\n" +
-            "\t\t\t\t\t\t\"like\": {\"type\": \"integer\"}\n" +
+            "\t\t\t\t\t\t\"like\": {\"type\": \"integer\"},\n" +
+            "\t\t\t\t\t\t\"ctime\": {\"type\": \"date\"}\n" +
             "\t\t\t\t\t}\n" +
             "                },\n" +
             "                \"share\": {\n" +
@@ -85,7 +92,10 @@ public class ElasticSearchUtil {
             "                },\n" +
             "                \"view\": {\n" +
             "                    \"type\": \"integer\"\n" +
-            "                }\n" +
+            "                },\n" +
+            "\t\t\t\t\"hot\": {\n" +
+            "\t\t\t\t\t\"type\": \"float\"\n" +
+            "\t\t\t\t}\n" +
             "        }\n" +
             "    }\n" +
             "}";

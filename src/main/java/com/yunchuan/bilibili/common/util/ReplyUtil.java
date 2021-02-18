@@ -9,6 +9,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 
@@ -63,13 +64,16 @@ public class ReplyUtil {
             Integer oid = item.getInteger("oid");
             Integer level = item.getJSONObject("member").getJSONObject("level_info").getInteger("current_level");
             Integer like = item.getInteger("like");
+            Date ctime = item.getDate("ctime");
             // 递归获取评论下的子评论
             parseReplies(item.getJSONArray("replies"), replies);
+
             videoReply.setMid(mid);
             videoReply.setOid(oid);
             videoReply.setCurrent_level(level);
             videoReply.setMessage(message);
             videoReply.setLike(like);
+            videoReply.setCtime(ctime);
             replies.add(videoReply);
         }
 

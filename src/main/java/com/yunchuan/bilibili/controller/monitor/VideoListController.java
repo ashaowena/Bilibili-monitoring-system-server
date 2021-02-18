@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.yunchuan.bilibili.common.response.R;
 import com.yunchuan.bilibili.entity.es.VideoDetailEntity;
 import com.yunchuan.bilibili.serviver.VideoService;
+import com.yunchuan.bilibili.vo.publicoptions.PublicOptionsResponseVo;
 import com.yunchuan.bilibili.vo.videodetail.VideoKeywordQueryWrapper;
 import com.yunchuan.bilibili.vo.videodetail.VideosAbstractResponseVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +70,13 @@ public class VideoListController {
     public R showVideoAbstract(@RequestParam String uid,@RequestParam Integer type,@RequestParam Integer period) throws IOException {
         VideosAbstractResponseVo videosAbstract = videoService.getVideoAbstract(uid,type,period);
         return R.ok().setData(videosAbstract);
+    }
+
+    @ResponseBody
+    @RequestMapping("/PublicOption")
+    public R getPublicOptions(@RequestParam String uid) throws IOException {
+        PublicOptionsResponseVo vo = videoService.getPublicOptions(uid);
+        return R.ok().setData(vo);
     }
 
 }

@@ -10,19 +10,26 @@ import com.yunchuan.bilibili.common.util.Page;
 import com.yunchuan.bilibili.config.ElasticSearchConfig;
 
 import com.yunchuan.bilibili.entity.es.VideoDetailEntity;
+import com.yunchuan.bilibili.vo.BarWrapper;
+import com.yunchuan.bilibili.vo.publicoptions.PublicOptionsResponseVo;
 import com.yunchuan.bilibili.vo.videodetail.VideoKeywordQueryWrapper;
 import com.yunchuan.bilibili.vo.videodetail.VideosAbstractResponseVo;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.xcontent.json.JsonXContentParser;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ConstantScoreQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.terms.IncludeExclude;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
@@ -37,6 +44,7 @@ import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -76,6 +84,10 @@ public class VideoService {
     private VideosAbstractResponseVo videoAbstractSearchResponseBuilder(SearchResponse result) {
         Integer count = (int) result.getHits().getTotalHits().value;
 
+        if (count == 0) {
+            VideosAbstractResponseVo vo = VideosAbstractResponseVo.init();
+            return vo;
+        }
 
         Aggregations aggregations = result.getAggregations();
         Map<String, Double> map = new HashMap<>();
@@ -279,6 +291,57 @@ public class VideoService {
 
         return tNames;
     }
+
+    public PublicOptionsResponseVo getPublicOptions(String uid) throws IOException {
+        PublicOptionsResponseVo vo = new PublicOptionsResponseVo();
+        BarWrapper replyBar = getWordCloud("reply_text.message",uid);
+        BarWrapper danmakuBar = getWordCloud("danmaku_text",uid);
+        vo.setReplyBar(replyBar);
+        vo.setDanmakuBar(danmakuBar);
+        return vo;
+    }
+
+    private BarWrapper getWordCloud(String field,String uid) throws IOException {
+        TermQueryBuilder termUID = QueryBuilders.termQuery("mid", uid);
+
+        StringBuilder regExp = new StringBuilder("[\u4E00-\u9FA5][\u4E00-\u9FA5]");
+        Map<String, Integer> docNumMap = new HashMap<>();
+        for (int i = 0; i < 3; i++) {
+            SearchRequest request = new SearchRequest();
+            SearchSourceBuilder builder = new SearchSourceBuilder();
+            builder.size(0);
+            TermsAggregationBuilder term_agg = AggregationBuilders.terms(field + "_agg").field(field);
+            term_agg.size(10);
+            term_agg.includeExclude(new IncludeExclude(regExp.toString(),null));
+            regExp.append("[\u4E00-\u9FA5]");
+            builder.query(termUID);
+            builder.aggregation(term_agg);
+            request.source(builder);
+            SearchResponse response = esClient.search(request, ElasticSearchConfig.COMMON_OPTIONS);
+            ParsedTerms aggregation = response.getAggregations().get(field + "_agg");
+            aggregation.getBuckets().forEach(item -> docNumMap.put(item.getKeyAsString(),(int)item.getDocCount()));
+        }
+        BarWrapper wrapper = new BarWrapper();
+        docNumMap.entrySet().stream().sorted((o,n) -> {
+            if (n.getValue().equals(o.getValue())) {
+                return n.getKey().length() - o.getKey().length();
+            }
+
+            return n.getValue() - o.getValue();
+        }).limit(10).forEach(item -> {
+            wrapper.getBar_X().add(item.getKey());
+            wrapper.getBar_Y().add(item.getValue());
+        });
+
+        for (int i = 0, j = 10 - wrapper.getBar_X().size();i < j; i++) {
+            wrapper.getBar_X().add("-");
+        }
+
+
+        return wrapper;
+    }
+
+
 }
 
 

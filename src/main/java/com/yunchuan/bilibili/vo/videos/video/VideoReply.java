@@ -2,6 +2,7 @@ package com.yunchuan.bilibili.vo.videos.video;
 
 import lombok.Data;
 
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -17,6 +18,8 @@ public class VideoReply {
     private String message;
     // 点赞
     private Integer like;
+    // 评论时间
+    private Date ctime;
     // 子评论
 //    private List<VideoReply> replies;
     // 是否被删除(0,未删，1,以删)

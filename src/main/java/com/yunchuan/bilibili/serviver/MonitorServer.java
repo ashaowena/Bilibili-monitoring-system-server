@@ -394,7 +394,6 @@ public class MonitorServer {
             CompletableFuture<Void> async = CompletableFuture.runAsync(() -> {
                 try {
                     HttpUriRequest request2 = RequestFactory.getApacheRequest(RequestPath.VIDEO_REPLY, bvid.getAid(), page[0]);
-                    System.out.println("reply:" + request2);
                     String content0 = client.httpsGet(request2);
                     List<VideoReply> videoReplies = ReplyUtil.getVideoReplies(content0);
                     ReplyUtil.pageableAdapt(bvid, videoReplies);
