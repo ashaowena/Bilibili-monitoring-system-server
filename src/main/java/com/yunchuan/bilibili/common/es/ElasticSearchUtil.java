@@ -5,9 +5,32 @@ public class ElasticSearchUtil {
 
     public static final String VIDEO_DETAIL_INDEX = "video_detail";
 
-    public static final String[] VIDEO_DETAIL_INDEX_ARR = { VIDEO_DETAIL_INDEX };
+    public static final String REPLIES_INDEX = "replies_index";
 
-    public static final String VIDEO_INDEX_DEFINITION = "{\n" +
+    public static final String REPLIES_INDEX_MAPPING = "{\n" +
+            "    \"mappings\":{\n" +
+            "        \"properties\":{\n" +
+            "\t\t\t\t\t\t\"rpid\": {\"type\": \"keyword\"},\n" +
+            "\t\t\t\t\t\t\"mid\": {\"type\": \"integer\"},\n" +
+            "\t\t\t\t\t\t\"name\": {\"type\": \"keyword\"},\n" +
+            "\t\t\t\t\t\t\"current_level\": {\"type\": \"integer\"},\n" +
+            "\t\t\t\t\t\t\"oid\": {\"type\": \"integer\"},\n" +
+            "\t\t\t\t\t\t\"message\": {\"type\": \"text\",\n" +
+            "\t\t\t\t\t\t\t\t\t\"fielddata\": true,\n" +
+            "\t\t\t\t\t\t\t\t\t\"analyzer\": \"ik_max_word\",\n" +
+            "\t\t\t\t\t\t\t\t\t\"search_analyzer\": \"ik_max_word\"\n" +
+            "\t\t\t\t\t\t\t\t},\n" +
+            "\t\t\t\t\t\t\"like\": {\"type\": \"integer\"},\n" +
+            "\t\t\t\t\t\t\"ctime\": {\"type\": \"date\"},\n" +
+            "\t\t\t\t\t\t\"face\": {\"type\": \"keyword\"},\n" +
+            "\t\t\t\t\t\t\"title\": {\"type\": \"keyword\"},\n" +
+            "\t\t\t\t\t\t\"bvid\": {\"type\": \"keyword\"},\n" +
+            "\t\t\t\t\t\t\"uid\": {\"type\": \"keyword\"}\n" +
+            "\t\t    }\n" +
+            "\t\t}\n" +
+            "}";
+
+    public static final String VIDEO_INDEX_MAPPING = "{\n" +
             "    \"mappings\":{\n" +
             "        \"properties\":{\n" +
             "            \"bvid\": {\n" +
@@ -64,6 +87,7 @@ public class ElasticSearchUtil {
             "                \"reply_text\": {\n" +
             "                    \"properties\": {\n" +
             "\t\t\t\t\t\t\"mid\": {\"type\": \"integer\"},\n" +
+            "\t\t\t\t\t\t\"name\": {\"type\": \"keyword\"},\n" +
             "\t\t\t\t\t\t\"current_level\": {\"type\": \"integer\"},\n" +
             "\t\t\t\t\t\t\"oid\": {\"type\": \"integer\"},\n" +
             "\t\t\t\t\t\t\"message\": {\"type\": \"text\",\n" +
@@ -72,7 +96,8 @@ public class ElasticSearchUtil {
             "\t\t\t\t\t\t\t\t\t\"search_analyzer\": \"ik_max_word\"\n" +
             "\t\t\t\t\t\t\t\t},\n" +
             "\t\t\t\t\t\t\"like\": {\"type\": \"integer\"},\n" +
-            "\t\t\t\t\t\t\"ctime\": {\"type\": \"date\"}\n" +
+            "\t\t\t\t\t\t\"ctime\": {\"type\": \"date\"},\n" +
+            "\t\t\t\t\t\t\"face\": {\"type\": \"keyword\"}\n" +
             "\t\t\t\t\t}\n" +
             "                },\n" +
             "                \"share\": {\n" +

@@ -1,12 +1,14 @@
 package com.yunchuan.bilibili.controller.monitor;
 
-import com.alibaba.fastjson.JSONObject;
+
 import com.yunchuan.bilibili.common.response.R;
 import com.yunchuan.bilibili.entity.es.VideoDetailEntity;
 import com.yunchuan.bilibili.serviver.VideoService;
 import com.yunchuan.bilibili.vo.publicoptions.PublicOptionsResponseVo;
 import com.yunchuan.bilibili.vo.videodetail.VideoKeywordQueryWrapper;
 import com.yunchuan.bilibili.vo.videodetail.VideosAbstractResponseVo;
+import com.yunchuan.bilibili.vo.videos.video.VideoReply;
+import com.yunchuan.bilibili.vo.videos.video.VideoReplyContainOrigin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -77,6 +79,13 @@ public class VideoListController {
     public R getPublicOptions(@RequestParam String uid) throws IOException {
         PublicOptionsResponseVo vo = videoService.getPublicOptions(uid);
         return R.ok().setData(vo);
+    }
+
+    @ResponseBody
+    @RequestMapping("/ReplyList")
+    public R getReplies(@RequestParam String uid, @RequestParam(required = false) Integer period, @RequestParam(required = false) String keyword) throws IOException {
+        List<VideoReplyContainOrigin> replyList = videoService.getReplyList(uid,keyword,period);
+        return R.ok().setData(replyList);
     }
 
 }

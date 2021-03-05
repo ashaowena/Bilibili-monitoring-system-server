@@ -32,15 +32,16 @@ public class AfterInitTask implements ApplicationListener<ContextRefreshedEvent>
         log.info("开始执行初始化方法。。。。。");
 
 
-        CreateIndexRequest request = new CreateIndexRequest(ElasticSearchUtil.VIDEO_DETAIL_INDEX);//创建索引
+        CreateIndexRequest videos_index = new CreateIndexRequest(ElasticSearchUtil.VIDEO_DETAIL_INDEX);//创建索引
+        CreateIndexRequest replies_index = new CreateIndexRequest(ElasticSearchUtil.REPLIES_INDEX);
         //创建的每个索引都可以有与之关联的特定设置。
 //        request.settings(Settings.builder()
 //                .put("index.number_of_shards", 3)
 //                .put("index.number_of_replicas", 2)
 //        );
         //创建索引时创建文档类型映射
-        request.mapping(ElasticSearchUtil.VIDEO_INDEX_DEFINITION, XContentType.JSON);
-
+        videos_index.source(ElasticSearchUtil.VIDEO_INDEX_MAPPING, XContentType.JSON);
+        replies_index.source(ElasticSearchUtil.REPLIES_INDEX_MAPPING,XContentType.JSON);
         //可选参数
 //        request.timeout(TimeValue.timeValueMinutes(2));//超时,等待所有节点被确认(使用TimeValue方式)
         //request.timeout("2m");//超时,等待所有节点被确认(使用字符串方式)
@@ -53,12 +54,26 @@ public class AfterInitTask implements ApplicationListener<ContextRefreshedEvent>
 
         //同步执行
         try {
-            CreateIndexResponse createIndexResponse = esClient.indices().create(request, RequestOptions.DEFAULT);
+            esClient.indices().create(videos_index, RequestOptions.DEFAULT);
         } catch (ElasticsearchStatusException e) {
-            log.info("索引已存在，无需重复创建");
+//            log.info("索引" + videos_index + "已存在，无需重复创建");
+            System.out.println(e.getMessage());
         } catch (IOException e) {
             log.info("ES连接失败");
         }
+
+        try {
+            esClient.indices().create(replies_index, RequestOptions.DEFAULT);
+        } catch (ElasticsearchStatusException e) {
+//            log.info("索引" + replies_index +"已存在，无需重复创建");
+            System.out.println(e.getMessage());
+        } catch (IOException e) {
+            log.info("ES连接失败");
+        }
+
+
+
+
         //异步执行
         //异步执行创建索引请求需要将CreateIndexRequest实例和ActionListener实例传递给异步方法：
         //CreateIndexResponse的典型监听器如下所示：

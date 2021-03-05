@@ -5,13 +5,15 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.yunchuan.bilibili.entity.es.VideoDetailEntity;
 import com.yunchuan.bilibili.vo.videos.video.VideoReply;
+import com.yunchuan.bilibili.vo.videos.video.VideoReplyContainOrigin;
+import org.springframework.beans.BeanUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
+import java.util.Set;
 
 
 public class ReplyUtil {
@@ -65,15 +67,21 @@ public class ReplyUtil {
             Integer level = item.getJSONObject("member").getJSONObject("level_info").getInteger("current_level");
             Integer like = item.getInteger("like");
             Date ctime = item.getDate("ctime");
+            String face = item.getJSONObject("member").getString("avatar");
+            String name = item.getJSONObject("member").getString("uname");
+            String rpid = item.getString("rpid");
             // 递归获取评论下的子评论
             parseReplies(item.getJSONArray("replies"), replies);
 
+            videoReply.setRpid(rpid);
             videoReply.setMid(mid);
             videoReply.setOid(oid);
             videoReply.setCurrent_level(level);
             videoReply.setMessage(message);
             videoReply.setLike(like);
             videoReply.setCtime(ctime);
+            videoReply.setFace(face);
+            videoReply.setName(name);
             replies.add(videoReply);
         }
 
@@ -103,5 +111,20 @@ public class ReplyUtil {
             }
 
         }
+    }
+
+    public static List<VideoReplyContainOrigin> flattingReplies(Set<VideoDetailEntity> bvids) {
+        List<VideoReplyContainOrigin> replies = new ArrayList<>(bvids.size() * 10);
+        for (VideoDetailEntity bvid : bvids) {
+            for (VideoReply videoReply : bvid.getReply_text()) {
+                VideoReplyContainOrigin containOrigin = new VideoReplyContainOrigin();
+                BeanUtils.copyProperties(videoReply,containOrigin);
+                containOrigin.setTitle(bvid.getTitle());
+                containOrigin.setBvid(bvid.getBvid());
+                containOrigin.setUid(bvid.getMid());
+                replies.add(containOrigin);
+            }
+        }
+        return replies;
     }
 }

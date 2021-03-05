@@ -22,11 +22,7 @@ public enum  DateUtil {
 
     public final int PERIOD;
 
-//    private static final DateTimeFormatter formatter;
-//
-//    public static String toDateString() {
-//
-//    }
+
 
     public static Date getBeforeDate(int period) {
         Date now = new Date();
@@ -35,6 +31,7 @@ public enum  DateUtil {
         Date before = Date.from(beforeLocalDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
         return before;
     }
+
 
     public static Date getNowDate() {
         LocalDate nowLocalDate = LocalDate.now();

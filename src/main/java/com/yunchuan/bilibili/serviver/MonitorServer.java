@@ -35,6 +35,7 @@ import com.yunchuan.bilibili.vo.videos.VideoDetailFromList;
 import com.yunchuan.bilibili.vo.videos.video.Stat;
 
 import com.yunchuan.bilibili.vo.videos.video.VideoReply;
+import com.yunchuan.bilibili.vo.videos.video.VideoReplyContainOrigin;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.dom4j.Document;
@@ -52,10 +53,12 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -217,6 +220,11 @@ public class MonitorServer {
     }
 
     private void getAndSaveVideoDetail(Set<VideoDetailEntity> bvids) throws Exception {
+
+        if (CollectionUtils.isEmpty(bvids)) {
+            return;
+        }
+
         Set<CompletableFuture> syncSet = new HashSet<>();
         getVideoTag(bvids, syncSet);
         getVideoDanmaku(bvids, syncSet);
@@ -243,8 +251,55 @@ public class MonitorServer {
         }
         BulkResponse bulk = esClient.bulk(bulkAddRequest, ElasticSearchConfig.COMMON_OPTIONS);
         BulkItemResponse[] items = bulk.getItems();
+
         for (BulkItemResponse item : items) {
-            System.out.println("response:" + item.getFailureMessage());
+            if (item.getFailureMessage() != null) {
+                log.error(item.getFailureMessage());
+            }
+        }
+
+        // 为了让评论也能够进行关键词检索(如果只是以数组的方式存入每个视频下，则不行)，保存评论数据
+        saveRepliesDetail(bvids);
+
+    }
+
+    /**
+     * 单独存入评论信息，做搜索
+     * @param bvids
+     */
+    public void saveRepliesDetail(Set<VideoDetailEntity> bvids) throws IOException {
+        List<VideoReplyContainOrigin> replyList = ReplyUtil.flattingReplies(bvids);
+
+        if (CollectionUtils.isEmpty(replyList)) {
+            return;
+        }
+
+        // 删除ES中的旧数据
+        BulkRequest bulkDeleteRequest = new BulkRequest();
+        for (VideoReplyContainOrigin entity : replyList) {
+            DeleteRequest deleteRequest = new DeleteRequest(ElasticSearchUtil.REPLIES_INDEX);
+            deleteRequest.id(entity.getRpid());
+            bulkDeleteRequest.add(deleteRequest);
+        }
+
+        esClient.bulk(bulkDeleteRequest, ElasticSearchConfig.COMMON_OPTIONS);
+
+
+        // 插入新数据
+        BulkRequest bulkAddRequest = new BulkRequest();
+        for (VideoReplyContainOrigin entity : replyList) {
+            IndexRequest indexRequest = new IndexRequest(ElasticSearchUtil.REPLIES_INDEX);
+            indexRequest.id(entity.getRpid());
+            indexRequest.source(JSONObject.toJSONString(entity), XContentType.JSON);
+            bulkAddRequest.add(indexRequest);
+        }
+        BulkResponse bulk = esClient.bulk(bulkAddRequest, ElasticSearchConfig.COMMON_OPTIONS);
+
+        BulkItemResponse[] items = bulk.getItems();
+        for (BulkItemResponse item : items) {
+            if (item.getFailureMessage() != null) {
+                log.error(item.getFailureMessage());
+            }
         }
 
     }
@@ -438,10 +493,27 @@ public class MonitorServer {
      * @param uid
      * @throws InterruptedException
      */
-    public void saveMonitorUp(String uid) throws Exception {
-        UpStatus upStatus = doMonitorUp(uid, true);
-        upStatus.setDate(new Date());
-        upStatusDAO.insert(upStatus);
+//    public UpStatus saveMonitorUp(String uid) throws Exception {
+//        UpStatus upStatus = doMonitorUp(uid, true);
+//        upStatus.setDate(new Date());
+//        upStatusDAO.insert(upStatus);
+//        return upStatus;
+//    }
+
+    /**
+     * 异步更新up主信息
+     * @param uid
+     */
+    public void saveMonitorUpAsync(String uid) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                UpStatus upStatus = doMonitorUp(uid, true);
+                upStatus.setDate(new Date());
+                upStatusDAO.insert(upStatus);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private AggVideoResult aggVideoDetails(Set<VideoDetailEntity> videoDetails) {
@@ -479,7 +551,7 @@ public class MonitorServer {
         String infoResponse = client.httpsGet(infoRequest);
         JSONObject infoMap = JSONObject.parseObject(infoResponse);
         if (infoMap.getInteger("code") == 0) {
-            UpInfoVo upInfoVo = infoMap.getObject("data",UpInfoVo.class);
+            UpInfoVo upInfoVo = infoMap.getObject("data", UpInfoVo.class);
             String vip = infoMap.getJSONObject("data").getJSONObject("vip").getJSONObject("label").getString("text");
             String official = infoMap.getJSONObject("data").getJSONObject("official").getString("title");
             upInfoVo.setVip(vip);
@@ -556,7 +628,7 @@ public class MonitorServer {
         for (UpGroup upGroup : upGroups) {
             if (upGroup.getId().equals(groupId)) {
                 String ups = upGroup.getUp();
-                String newUps = ups.replace(";" + uid,"");
+                String newUps = ups.replace(";" + uid, "");
                 upGroup.setUp(newUps + ";" + uid);
                 upGroupDAO.updateById(upGroup);
             } else {
@@ -613,7 +685,7 @@ public class MonitorServer {
     }
 
     public byte[] getFace(String path) throws Exception {
-        HttpUriRequest request = RequestFactory.getApacheRequest(RequestPath.FACE,null, path);
+        HttpUriRequest request = RequestFactory.getApacheRequest(RequestPath.FACE, null, path);
         byte[] bytes = client.httpsGetByte(request);
         return bytes;
     }

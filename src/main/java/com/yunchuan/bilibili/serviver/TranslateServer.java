@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.yunchuan.bilibili.common.util.DateUtil;
 import com.yunchuan.bilibili.dao.UpStatusDAO;
 import com.yunchuan.bilibili.entity.UpStatus;
+import com.yunchuan.bilibili.serviver.translate.TranslateProcess;
 import com.yunchuan.bilibili.vo.ChartWrapper;
 import com.yunchuan.bilibili.vo.UpStatusAfterTranslatedVo;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,10 @@ public class TranslateServer {
     @Autowired
     MonitorServer monitorServer;
 
+    @Autowired
+    TranslateProcess translateProcess;
+
+
     public ChartWrapper translateToChar(List<UpStatus> dailyStatus) {
         ChartWrapper wrapper = new ChartWrapper();
         for (UpStatus status : dailyStatus) {
@@ -43,7 +48,7 @@ public class TranslateServer {
         return wrapper;
     }
 
-    public List<UpStatusAfterTranslatedVo> getDailyTranslated(List<UpStatus> dailyStatus,Integer period) {
+    public List<UpStatusAfterTranslatedVo> getDailyTranslated(List<UpStatus> dailyStatus, Integer period) {
         if (CollectionUtils.isEmpty(dailyStatus)) {
             log.info("获取日期数据失败");
             return null;
@@ -66,11 +71,16 @@ public class TranslateServer {
 
     public List<UpStatus> getDailyStatus(String uid, Integer period) {
         Date beforeDate = DateUtil.getBeforeDate(period);
-        List<UpStatus> upStatuses = upStatusDAO.selectList(new QueryWrapper<UpStatus>().eq("uid",uid).gt("date", beforeDate).orderByDesc("date"));
+        List<UpStatus> upStatuses = upStatusDAO.selectList(new QueryWrapper<UpStatus>().eq("uid", uid).gt("date", beforeDate).orderByDesc("date"));
         if (CollectionUtils.isEmpty(upStatuses)) {
             return null;
         }
         List<UpStatus> subList = null;
+
+        // 对获取到的每日信息做后置处理,默认会把中间缺少的天数线性填充，也可以自己
+        // 重写TranslateProcess接口的实现类
+        translateProcess.upStatusesProcess(upStatuses);
+
         for (int i = 0; i < upStatuses.size(); i++) {
             subList = upStatuses.subList(0, i + 1);
             if (!DateUtil.isContinuous(subList)) {
@@ -108,7 +118,7 @@ public class TranslateServer {
                 throw new RuntimeException("周期信息错误！");
         }
         List<UpStatusAfterTranslatedVo> translatedVos = smartTranslate(uid, ePeriod);
-        return translatedVos == null? new ArrayList<UpStatusAfterTranslatedVo>():translatedVos;
+        return translatedVos == null ? new ArrayList<UpStatusAfterTranslatedVo>() : translatedVos;
     }
 
     public List<UpStatusAfterTranslatedVo> smartTranslate(String uid, DateUtil period) {
@@ -134,41 +144,38 @@ public class TranslateServer {
     }
 
     private List<UpStatus> smartGetUpStatus(String uid, DateUtil period) {
-            Date before = DateUtil.getBeforeDate(period.PERIOD * 3 - 1);
-            Date now = DateUtil.getNowDate();
-            List<UpStatus> upStatuses = upStatusDAO.selectList(new QueryWrapper<UpStatus>().eq("uid", uid).between("date", before, now).orderByDesc("date"));
-            if (upStatuses == null || upStatuses.size() < period.PERIOD * 2) {
-                log.info("不足两个周期，无法计算");
-                return null;
-            }
+        Date before = DateUtil.getBeforeDate(period.PERIOD * 3 - 1);
+        Date now = DateUtil.getNowDate();
+        List<UpStatus> upStatuses = upStatusDAO.selectList(new QueryWrapper<UpStatus>().eq("uid", uid).between("date", before, now).orderByDesc("date"));
+        if (upStatuses == null || upStatuses.size() < period.PERIOD * 2) {
+            log.info("不足两个周期，无法计算");
+            return null;
+        }
 
-            if (!DateUtil.isContinuous(upStatuses)) {
-                log.info("不是连续的周期，无法计算");
-                return null;
-            }
-            if (upStatuses.size() == period.PERIOD * 3) {
-                List<UpStatus> upStatuses3Period = agg3PeriodUpStatus(upStatuses);
-                return upStatuses3Period;
-            } else {
-                List<UpStatus> subList = upStatuses.subList(0, period.PERIOD * 2);
-                List<UpStatus> UpStatuses2Period = agg2PeriodUpStatus(subList);
-                return UpStatuses2Period;
-            }
+        translateProcess.upStatusesProcess(upStatuses);
+
+        if (upStatuses.size() == period.PERIOD * 3) {
+            List<UpStatus> upStatuses3Period = agg3PeriodUpStatus(upStatuses);
+            return upStatuses3Period;
+        } else {
+            List<UpStatus> subList = upStatuses.subList(0, period.PERIOD * 2);
+            List<UpStatus> UpStatuses2Period = agg2PeriodUpStatus(subList);
+            return UpStatuses2Period;
+        }
 
     }
 
 
-
     // 获取2个周期内的总和数据
     private List<UpStatus> agg2PeriodUpStatus(List<UpStatus> upStatuses) {
-        if (upStatuses.size() %2 != 0) {
+        if (upStatuses.size() % 2 != 0) {
             log.info("数据有误或不足，无法聚合基期");
             return null;
         }
 
         List<UpStatus> periodUpStatus = new ArrayList<>();
         UpStatus periodHeadUpStatus = new UpStatus().init();
-        upStatuses.stream().limit(upStatuses.size() / 2).forEach( u -> {
+        upStatuses.stream().limit(upStatuses.size() / 2).forEach(u -> {
             periodHeadUpStatus.setFavorite(periodHeadUpStatus.getFavorite() + u.getFavorite());
             periodHeadUpStatus.setShare(periodHeadUpStatus.getShare() + u.getShare());
             periodHeadUpStatus.setReply(periodHeadUpStatus.getReply() + u.getReply());
@@ -180,7 +187,7 @@ public class TranslateServer {
             periodHeadUpStatus.setView(periodHeadUpStatus.getView() + u.getView());
         });
         UpStatus periodTailUpStatus = new UpStatus().init();
-        upStatuses.stream().skip(upStatuses.size() / 2).forEach( u -> {
+        upStatuses.stream().skip(upStatuses.size() / 2).forEach(u -> {
             periodTailUpStatus.setFavorite(periodTailUpStatus.getFavorite() + u.getFavorite());
             periodTailUpStatus.setShare(periodTailUpStatus.getShare() + u.getShare());
             periodTailUpStatus.setReply(periodTailUpStatus.getReply() + u.getReply());
@@ -199,14 +206,14 @@ public class TranslateServer {
 
     // 获取3个周期内的总和数据
     private List<UpStatus> agg3PeriodUpStatus(List<UpStatus> upStatuses) {
-        if (upStatuses.size() %3 != 0) {
+        if (upStatuses.size() % 3 != 0) {
             log.info("数据有误或不足，无法聚合基期");
             return null;
         }
 
         List<UpStatus> periodUpStatus = new ArrayList<>();
         UpStatus periodHeadUpStatus = new UpStatus().init();
-        upStatuses.stream().limit(upStatuses.size() / 3).forEach( u -> {
+        upStatuses.stream().limit(upStatuses.size() / 3).forEach(u -> {
             periodHeadUpStatus.setFavorite(periodHeadUpStatus.getFavorite() + u.getFavorite());
             periodHeadUpStatus.setShare(periodHeadUpStatus.getShare() + u.getShare());
             periodHeadUpStatus.setReply(periodHeadUpStatus.getReply() + u.getReply());
@@ -219,7 +226,7 @@ public class TranslateServer {
         });
 
         UpStatus periodMiddleUpStatus = new UpStatus().init();
-        upStatuses.stream().skip(upStatuses.size() / 3).limit(upStatuses.size() / 3).forEach( u -> {
+        upStatuses.stream().skip(upStatuses.size() / 3).limit(upStatuses.size() / 3).forEach(u -> {
             periodMiddleUpStatus.setFavorite(periodMiddleUpStatus.getFavorite() + u.getFavorite());
             periodMiddleUpStatus.setShare(periodMiddleUpStatus.getShare() + u.getShare());
             periodMiddleUpStatus.setReply(periodMiddleUpStatus.getReply() + u.getReply());
@@ -233,7 +240,7 @@ public class TranslateServer {
         });
 
         UpStatus periodTailUpStatus = new UpStatus().init();
-        upStatuses.stream().skip(upStatuses.size() * 2 / 3).forEach( u -> {
+        upStatuses.stream().skip(upStatuses.size() * 2 / 3).forEach(u -> {
             periodTailUpStatus.setFavorite(periodTailUpStatus.getFavorite() + u.getFavorite());
             periodTailUpStatus.setShare(periodTailUpStatus.getShare() + u.getShare());
             periodTailUpStatus.setReply(periodTailUpStatus.getReply() + u.getReply());
@@ -257,7 +264,7 @@ public class TranslateServer {
         // 查找今天的即时数据
 //        UpStatus upStatus = monitorServer.doMonitorUp(uid,false);
 
-        UpStatus upStatus = upStatusDAO.selectOne(new QueryWrapper<UpStatus>().eq("uid",uid).eq("date", DateUtil.getNowDate()));
+        UpStatus upStatus = upStatusDAO.selectOne(new QueryWrapper<UpStatus>().eq("uid", uid).eq("date", DateUtil.getNowDate()));
         if (upStatus == null) {
             log.error("获取今日数据失败");
             return null;
@@ -281,20 +288,20 @@ public class TranslateServer {
     public List<UpStatusAfterTranslatedVo> translate(String uid) throws Exception {
         List<UpStatusAfterTranslatedVo> translatedVos = new ArrayList<>();
         List<UpStatus> up3DateStatus = getUp3DayStatus(uid);
-        if (up3DateStatus.size() !=2 && up3DateStatus.size() !=3){
+        if (up3DateStatus.size() != 2 && up3DateStatus.size() != 3) {
             log.info("不满足2天或3天");
 
             return null;
         }
         // 必须是今天和昨天的数据
-        if (up3DateStatus.size() ==2) {
+        if (up3DateStatus.size() == 2) {
             UpStatus upStatus0 = up3DateStatus.get(0);
             UpStatus upStatus1 = up3DateStatus.get(1);
             Date date0 = upStatus0.getDate();
             Date date1 = upStatus1.getDate();
             LocalDate localDate0 = Instant.ofEpochMilli(date0.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
             LocalDate localDate1 = Instant.ofEpochMilli(date1.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
-            if (!localDate0.equals(LocalDate.now()) || !localDate1.equals(LocalDate.now().plusDays(-1L))){
+            if (!localDate0.equals(LocalDate.now()) || !localDate1.equals(LocalDate.now().plusDays(-1L))) {
                 // 有两天的数据，但不是昨天和今天
                 log.info("不满足连续2天");
                 return null;
@@ -325,8 +332,6 @@ public class TranslateServer {
             return translatedVos;
         }
     }
-
-
 
 
 }

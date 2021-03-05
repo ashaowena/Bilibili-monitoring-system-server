@@ -2,6 +2,7 @@ package com.yunchuan.bilibili.serviver;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import com.mysql.cj.x.protobuf.MysqlxDatatypes;
 import com.yunchuan.bilibili.common.constant.VideoQueryType;
 import com.yunchuan.bilibili.common.es.ElasticSearchUtil;
@@ -14,6 +15,8 @@ import com.yunchuan.bilibili.vo.BarWrapper;
 import com.yunchuan.bilibili.vo.publicoptions.PublicOptionsResponseVo;
 import com.yunchuan.bilibili.vo.videodetail.VideoKeywordQueryWrapper;
 import com.yunchuan.bilibili.vo.videodetail.VideosAbstractResponseVo;
+import com.yunchuan.bilibili.vo.videos.video.VideoReply;
+import com.yunchuan.bilibili.vo.videos.video.VideoReplyContainOrigin;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.search.SearchRequest;
@@ -40,6 +43,7 @@ import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -153,9 +157,7 @@ public class VideoService {
         SearchResponse response = esClient.search(request, ElasticSearchConfig.COMMON_OPTIONS);
         SearchHit[] hits = response.getHits().getHits();
         for (SearchHit hit : hits) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("source",hit.getSourceAsMap());
-            VideoDetailEntity entity = jsonObject.getObject("source", VideoDetailEntity.class);
+            VideoDetailEntity entity = JSONObject.parseObject(hit.getSourceAsString(), VideoDetailEntity.class);
             entities.add(entity);
         }
 
@@ -167,6 +169,9 @@ public class VideoService {
             return null;
         }
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+
+        boolQuery.filter(QueryBuilders.termQuery("mid", wrapper.getUid()));
+
         if (!StringUtils.isEmpty(wrapper.getTName())) {
             boolQuery.filter(QueryBuilders.termsQuery("tName", wrapper.getTName()));
         }
@@ -192,12 +197,12 @@ public class VideoService {
                     keywordQuery.should(QueryBuilders.matchQuery("description", keyword));
                     keywordQuery.should(QueryBuilders.matchQuery("danmaku_text", keyword));
                     keywordQuery.should(QueryBuilders.matchQuery("tag", keyword));
-                    keywordQuery.should(QueryBuilders.matchQuery("reply_text.message",keyword));
+                    keywordQuery.should(QueryBuilders.matchQuery("reply_text.message", keyword));
 
                     break;
                 case VideoQueryType.TITLE_AND_DESCRIPTION:
                     keywordQuery.should(QueryBuilders.matchQuery("title", keyword));
-                    keywordQuery.should(QueryBuilders.matchQuery("description",  keyword));
+                    keywordQuery.should(QueryBuilders.matchQuery("description", keyword));
                     break;
                 case VideoQueryType.DANMAKU:
                     keywordQuery.should(QueryBuilders.matchQuery("danmaku_text", keyword));
@@ -206,7 +211,7 @@ public class VideoService {
                     keywordQuery.should(QueryBuilders.matchQuery("tag", keyword));
                     break;
                 case VideoQueryType.REPLY:
-                    keywordQuery.should(QueryBuilders.matchQuery("reply_text.message",keyword));
+                    keywordQuery.should(QueryBuilders.matchQuery("reply_text.message", keyword));
                     break;
                 default:
                     throw new IllegalStateException("Unexpected value: " + wrapper.getKeywordWrapper().getSearchType());
@@ -219,12 +224,14 @@ public class VideoService {
         builder.query(new ConstantScoreQueryBuilder(boolQuery));
         // 分页处理
         esPageHelper(builder, wrapper.getPage());
+        // 排序处理
+        order(builder, wrapper.getOrder());
 
-        return new SearchRequest().source(builder);
+        return new SearchRequest(ElasticSearchUtil.VIDEO_DETAIL_INDEX).source(builder);
     }
 
     private void esPageHelper(SearchSourceBuilder searchSourceBuilder, Page page) {
-        if (page != null && page.getCurrPage() !=null && page.getPageSize() != null) {
+        if (page != null && page.getCurrPage() != null && page.getPageSize() != null) {
             searchSourceBuilder.from(page.getCurrPage());
             searchSourceBuilder.size(page.getPageSize());
         }
@@ -234,7 +241,7 @@ public class VideoService {
         if (type == null || type == 0) {
             searchSourceBuilder.sort("ctime", SortOrder.DESC);
         } else if (type == 1) {
-
+            // 保留自定义热度排序
         } else {
             searchSourceBuilder.sort("view", SortOrder.DESC);
         }
@@ -267,7 +274,7 @@ public class VideoService {
     }
 
 
-    public List<String> getVideosTagsName(String  uid) throws IOException {
+    public List<String> getVideosTagsName(String uid) throws IOException {
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
         boolQuery.filter(QueryBuilders.termQuery("mid", uid));
 
@@ -294,14 +301,14 @@ public class VideoService {
 
     public PublicOptionsResponseVo getPublicOptions(String uid) throws IOException {
         PublicOptionsResponseVo vo = new PublicOptionsResponseVo();
-        BarWrapper replyBar = getWordCloud("reply_text.message",uid);
-        BarWrapper danmakuBar = getWordCloud("danmaku_text",uid);
+        BarWrapper replyBar = getWordCloud("reply_text.message", uid);
+        BarWrapper danmakuBar = getWordCloud("danmaku_text", uid);
         vo.setReplyBar(replyBar);
         vo.setDanmakuBar(danmakuBar);
         return vo;
     }
 
-    private BarWrapper getWordCloud(String field,String uid) throws IOException {
+    private BarWrapper getWordCloud(String field, String uid) throws IOException {
         TermQueryBuilder termUID = QueryBuilders.termQuery("mid", uid);
 
         StringBuilder regExp = new StringBuilder("[\u4E00-\u9FA5][\u4E00-\u9FA5]");
@@ -312,17 +319,17 @@ public class VideoService {
             builder.size(0);
             TermsAggregationBuilder term_agg = AggregationBuilders.terms(field + "_agg").field(field);
             term_agg.size(10);
-            term_agg.includeExclude(new IncludeExclude(regExp.toString(),null));
+            term_agg.includeExclude(new IncludeExclude(regExp.toString(), null));
             regExp.append("[\u4E00-\u9FA5]");
             builder.query(termUID);
             builder.aggregation(term_agg);
             request.source(builder);
             SearchResponse response = esClient.search(request, ElasticSearchConfig.COMMON_OPTIONS);
             ParsedTerms aggregation = response.getAggregations().get(field + "_agg");
-            aggregation.getBuckets().forEach(item -> docNumMap.put(item.getKeyAsString(),(int)item.getDocCount()));
+            aggregation.getBuckets().forEach(item -> docNumMap.put(item.getKeyAsString(), (int) item.getDocCount()));
         }
         BarWrapper wrapper = new BarWrapper();
-        docNumMap.entrySet().stream().sorted((o,n) -> {
+        docNumMap.entrySet().stream().sorted((o, n) -> {
             if (n.getValue().equals(o.getValue())) {
                 return n.getKey().length() - o.getKey().length();
             }
@@ -333,7 +340,7 @@ public class VideoService {
             wrapper.getBar_Y().add(item.getValue());
         });
 
-        for (int i = 0, j = 10 - wrapper.getBar_X().size();i < j; i++) {
+        for (int i = 0, j = 10 - wrapper.getBar_X().size(); i < j; i++) {
             wrapper.getBar_X().add("-");
         }
 
@@ -342,6 +349,34 @@ public class VideoService {
     }
 
 
+    public List<VideoReplyContainOrigin> getReplyList(String uid, String keyword, Integer period) throws IOException {
+        SearchRequest request = new SearchRequest(ElasticSearchUtil.REPLIES_INDEX);
+        SearchSourceBuilder builder = new SearchSourceBuilder();
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        boolQuery.filter(QueryBuilders.termQuery("uid", uid));
+        if (!StringUtils.isEmpty(keyword)) {
+            boolQuery.filter(QueryBuilders.matchQuery("message", keyword));
+        }
+        if (period != null && period > 0) {
+            boolQuery.filter(QueryBuilders.rangeQuery("ctime").gte(DateUtil.getBeforeDate(period).getTime() / 1000));
+        }
+        builder.query(boolQuery);
+        request.source(builder);
+
+        SearchResponse response = esClient.search(request, ElasticSearchConfig.COMMON_OPTIONS);
+        SearchHit[] hits = response.getHits().getHits();
+        List<VideoReplyContainOrigin> list = new ArrayList<>();
+        for (SearchHit hit : hits) {
+
+            VideoReplyContainOrigin videoReply = JSONObject.parseObject(hit.getSourceAsString(), VideoReplyContainOrigin.class);
+            list.add(videoReply);
+
+        }
+
+        list.sort((o, n) -> n.getLike() - o.getLike());
+
+        return list;
+    }
 }
 
 

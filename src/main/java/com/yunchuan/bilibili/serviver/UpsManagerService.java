@@ -34,15 +34,30 @@ public class UpsManagerService {
     /**
      * 通过定时任务新增up主信息
      */
-    public void upDateUps() throws Exception {
+    public void upDateUps()  {
         List<UpDateVo> allUpUidsAndDates = upStatusDAO.getAllUpUidsAndDate();
         for (UpDateVo allUpUidAndDate : allUpUidsAndDates) {
             if (shouldUpdateUp(allUpUidAndDate)) {
-                monitorServer.saveMonitorUp(allUpUidAndDate.getUid());
+                monitorServer.saveMonitorUpAsync(allUpUidAndDate.getUid());
             }
         }
     }
 
+    /**
+     * 通过刷新按钮触发的跟新up操作,应该是同步执行的
+     * @param uid
+     * @throws Exception
+     */
+    public void upDateUpImmediately(String uid) throws Exception {
+        UpStatus upStatus = monitorServer.doMonitorUp(uid, true);
+        upStatusDAO.updateById(upStatus);
+    }
+
+    /**
+     * 判断今日是否已经更新过Up
+     * @param allUpUid
+     * @return
+     */
     public boolean shouldUpdateUp(UpDateVo allUpUid) {
         Date date = allUpUid.getDate();
         LocalDate upDate = Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
