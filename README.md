@@ -2,83 +2,83 @@
 
 ## 效果和布局
 
-![](src\main\resources\png\01.png "")
+![](https://gulimall-shao.oss-cn-guangzhou.aliyuncs.com/png/01.png "")
 先登陆，默认账号： admin 密码： admin
 
 --
 
-![](src\main\resources\png\02.png "")
+![](https://gulimall-shao.oss-cn-guangzhou.aliyuncs.com/png/02.png "")
 这里显示所有已关注的账号
 
 --
 
-![](src\main\resources\png\03.png "")
+![](https://gulimall-shao.oss-cn-guangzhou.aliyuncs.com/png/03.png "")
 点击账户管理
 
 --
 
-![](src\main\resources\png\04.png "")
+![](https://gulimall-shao.oss-cn-guangzhou.aliyuncs.com/png/04.png "")
 可以通过"添加账户"按钮添加新的监控账号，只需要填入账号uid即可
 
 --
 
 
-![](src\main\resources\png\05.png "")
+![](https://gulimall-shao.oss-cn-guangzhou.aliyuncs.com/png/05.png "")
 点击账号下的查看详情
 
 --
 
-![](src\main\resources\png\06.png "")
+![](https://gulimall-shao.oss-cn-guangzhou.aliyuncs.com/png/06.png "")
 里面分为 "核心一览"、"作品列表" 和 "舆情分析"三大模块，核心一览可以查看账号的各项基本数据，但前提是至少每天启动一次服务器并收集足够的天数，若中途有一天少了可以自动线性补全
 
 --
 
-![](src\main\resources\png\07.png "")
+![](https://gulimall-shao.oss-cn-guangzhou.aliyuncs.com/png/07.png "")
 里面的可以查看指定的周期内UP的各项指标，以及指标下的增量数据和存量数据
 
 --
 
-![](src\main\resources\png\08.png "")
+![](https://gulimall-shao.oss-cn-guangzhou.aliyuncs.com/png/08.png "")
 更改周期为30天后坐标轴也会相应的改变
 
 --
 
-![](src\main\resources\png\09.png "")
+![](https://gulimall-shao.oss-cn-guangzhou.aliyuncs.com/png/09.png "")
 作品列表模块，是统计所有在 "给定周期内" 发布所有作品
 
 --
 
-![](src\main\resources\png\10.png "")
+![](https://gulimall-shao.oss-cn-guangzhou.aliyuncs.com/png/10.png "")
 还可以根据关键词搜索符合条件的视频，还有分页加载功能不方便演示
 
 --
 
-![](src\main\resources\png\10-1.png "")
+![](https://gulimall-shao.oss-cn-guangzhou.aliyuncs.com/png/10-1.png "")
 进入“分析视频”模块后，可以看到单个视频的基本信息
 
 --
 
-![](src\main\resources\png\10-2.png "")
+![](https://gulimall-shao.oss-cn-guangzhou.aliyuncs.com/png/10-2.png "")
 和该视频与Up的其他视频的平均水平相比较的数据差异
 
 --
 
-![](src\main\resources\png\10-3.png "")
+![](https://gulimall-shao.oss-cn-guangzhou.aliyuncs.com/png/10-3.png "")
 分析该视频的评论以及热词
 
 --
 
-![](src\main\resources\png\10-4.png "")
+![](https://gulimall-shao.oss-cn-guangzhou.aliyuncs.com/png/10-4.png "")
 分析该视频的所有弹幕及热词
 
 --
 
-![](src\main\resources\png\11.png "")
+![](https://gulimall-shao.oss-cn-guangzhou.aliyuncs.com/png/11.png "")
 舆情分析模块，可以统计该账号下的所有评论和弹幕中出现最多的关键词并显示出现的次数
 
 --
 
-![](src\main\resources\png\12.png "")
+![](https://gulimall-shao.oss-cn-guangzhou.aliyuncs.com/png/12.png "")
 按点赞数对评论进行排序并显示每个评论的视频来源和评论者的ID
 
 ## 如何安装？
