@@ -222,10 +222,10 @@ public class MonitorServer {
 
     }
 
-    public void deleteUpFromEs(String bvid) throws IOException {
+    public void deleteUpFromEs(String uid) throws IOException {
         DeleteByQueryRequest deleteVideos = new DeleteByQueryRequest();
         deleteVideos.indices(ElasticSearchUtil.VIDEO_DETAIL_INDEX);
-        deleteVideos.setQuery(QueryBuilders.termQuery("bvid", bvid));
+        deleteVideos.setQuery(QueryBuilders.termQuery("uid", uid));
         BulkByScrollResponse videosResponse = esClient.deleteByQuery(deleteVideos, ElasticSearchConfig.COMMON_OPTIONS);
 
         for (BulkItemResponse.Failure res : videosResponse.getBulkFailures()) {
@@ -236,7 +236,7 @@ public class MonitorServer {
 
         DeleteByQueryRequest deleteReplies = new DeleteByQueryRequest();
         deleteReplies.indices(ElasticSearchUtil.REPLIES_INDEX);
-        deleteReplies.setQuery(QueryBuilders.termQuery("bvid", bvid));
+        deleteReplies.setQuery(QueryBuilders.termQuery("uid", uid));
         BulkByScrollResponse repliesResponse = esClient.deleteByQuery(deleteReplies, ElasticSearchConfig.COMMON_OPTIONS);
 
         for (BulkItemResponse.Failure res : repliesResponse.getBulkFailures()) {
