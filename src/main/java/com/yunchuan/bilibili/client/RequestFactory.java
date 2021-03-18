@@ -1,9 +1,7 @@
 package com.yunchuan.bilibili.client;
 
 
-import com.yunchuan.bilibili.client.netty.RequestPath;
-import io.netty.buffer.Unpooled;
-import io.netty.handler.codec.http.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
@@ -11,12 +9,10 @@ import org.springframework.util.CollectionUtils;
 
 
 import java.net.URI;
-import java.net.URLEncoder;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-
+@Slf4j
 public class RequestFactory {
 
     public static final String URL = "http://api.bilibili.com";
@@ -79,28 +75,28 @@ public class RequestFactory {
     public static final String VIDEO_DANMAKU = "/x/v1/dm/list.so";
 
 
-    public static FullHttpRequest getNettyRequest(RequestPath path, String uid, int page) throws Exception {
-        String fullPath = addParam(uid,path,page,"0");
-        System.out.println("路径：" + fullPath);
-        URI url = new URI(fullPath);
-        String meg = "hello";
-
-        FullHttpRequest request = new DefaultFullHttpRequest(
-                HttpVersion.HTTP_1_1, HttpMethod.GET, url.toASCIIString(), Unpooled.wrappedBuffer(meg.getBytes("UTF-8")));
-
-        request.headers()
-                .set(HttpHeaderNames.CONTENT_TYPE, "text/plain;charset=UTF-8")
-                //开启长连接
-                .set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE)
-                //设置传递请求内容的长度
-                .set(HttpHeaderNames.CONTENT_LENGTH, request.content().readableBytes())
-                //设置请浏览器，躲避B站反爬虫
-                .set(HttpHeaderNames.USER_AGENT, RequestFactory.USER_AGENT)
-
-                .set(HttpHeaderNames.HOST, "api.bilibili.com");
-
-        return request;
-    }
+//    public static FullHttpRequest getNettyRequest(RequestPath path, String uid, int page) throws Exception {
+//        String fullPath = addParam(uid,path,page,"0");
+//        System.out.println("路径：" + fullPath);
+//        URI url = new URI(fullPath);
+//        String meg = "hello";
+//
+//        FullHttpRequest request = new DefaultFullHttpRequest(
+//                HttpVersion.HTTP_1_1, HttpMethod.GET, url.toASCIIString(), Unpooled.wrappedBuffer(meg.getBytes("UTF-8")));
+//
+//        request.headers()
+//                .set(HttpHeaderNames.CONTENT_TYPE, "text/plain;charset=UTF-8")
+//                //开启长连接
+//                .set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE)
+//                //设置传递请求内容的长度
+//                .set(HttpHeaderNames.CONTENT_LENGTH, request.content().readableBytes())
+//                //设置请浏览器，躲避B站反爬虫
+//                .set(HttpHeaderNames.USER_AGENT, RequestFactory.USER_AGENT)
+//
+//                .set(HttpHeaderNames.HOST, "api.bilibili.com");
+//
+//        return request;
+//    }
 
     public static HttpUriRequest getApacheRequest(RequestPath path, String uid) throws Exception {
         HttpUriRequest request = getApacheRequest(path, uid, 1, null,"0");
@@ -130,7 +126,9 @@ public class RequestFactory {
             fullPath = url.concat(addParam(uid,path,page,tid));
         }
         URI uri = new URI(fullPath);
-        System.out.println("路径：" + fullPath);
+
+        log.info("访问路径：" + fullPath);
+
         HttpUriRequest request = RequestBuilder.create(HttpGet.METHOD_NAME)
                 .setUri(uri)
                 .build();
@@ -138,10 +136,10 @@ public class RequestFactory {
         return request;
     }
 
-    public static FullHttpRequest getNettyRequest(RequestPath path, String uid) throws Exception {
-        FullHttpRequest request = getNettyRequest(path, uid, 1);
-        return request;
-    }
+//    public static FullHttpRequest getNettyRequest(RequestPath path, String uid) throws Exception {
+//        FullHttpRequest request = getNettyRequest(path, uid, 1);
+//        return request;
+//    }
 
     private static String addParam(String url, Map<String,String> paramMap) {
 

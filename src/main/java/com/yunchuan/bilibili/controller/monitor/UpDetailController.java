@@ -74,11 +74,11 @@ public class UpDetailController {
 //        periodDetailResponseVo.setTranslatedVos(translatedVos);
         // 设置图表总量数据
         List<UpStatus> dailyStatus = translateServer.getDailyStatus(uid, period);
-        ChartWrapper chartWrapper = translateServer.translateToChar(dailyStatus);
+        ChartWrapper chartWrapper = translateServer.translateToChar(dailyStatus, period);
         periodDetailResponseVo.setDailyUpStatuses(chartWrapper);
         // 设置图表增量数据
         List<UpStatusAfterTranslatedVo> dailyTranslatedVos = translateServer.getDailyTranslated(dailyStatus,period);
-        ChartWrapper incChartWrapper = translateServer.translateToIncChar(dailyTranslatedVos);
+        ChartWrapper incChartWrapper = translateServer.translateToIncChar(dailyTranslatedVos, period);
         periodDetailResponseVo.setDailyTranslatedVos(incChartWrapper);
         return R.ok().setData(periodDetailResponseVo);
     }
@@ -109,6 +109,8 @@ public class UpDetailController {
         byte[] face = monitorServer.getFace(path);
         return face;
     }
+
+
 
 
 

@@ -61,6 +61,9 @@ public class ReplyUtil {
         for (int i = 0; i < array.size(); i++) {
             VideoReply videoReply = new VideoReply();
             JSONObject item = array.getJSONObject(i);
+            if (item.getJSONObject("content") == null) {
+                return new ArrayList<VideoReply>();
+            }
             String message = item.getJSONObject("content").getString("message");
             Integer mid = item.getInteger("mid");
             Integer oid = item.getInteger("oid");

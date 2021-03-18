@@ -63,13 +63,18 @@ public class VideoService {
 
 
     public VideosAbstractResponseVo getVideoAbstract(String uid, Integer type, Integer period) throws IOException {
-        Date beforeDate = DateUtil.getBeforeDate(period);
+        Date beforeDate = null;
+
+        if (period != 0) {
+            beforeDate = DateUtil.getBeforeDate(period);
+        }
+
         SearchRequest request = null;
-        if (type != null && type.equals(0)) {
+        if (type != null && type.equals(0)) { // Type = 0： 计算平均数
             request = videoAbstractAVGSearchRequestBuilder(uid, beforeDate);
         }
 
-        if (type != null && type.equals(1)) {
+        if (type != null && type.equals(1)) { // Type = 1: 计算中位数
             request = videoAbstractMedSearchRequestBuilder(uid, beforeDate);
         }
 
@@ -116,7 +121,9 @@ public class VideoService {
 
         SearchRequest searchRequest = new SearchRequest(ElasticSearchUtil.VIDEO_DETAIL_INDEX);
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-        boolQuery.filter(QueryBuilders.rangeQuery("ctime").gte(beforeDate.getTime() / 1000));
+        if (beforeDate != null) {
+            boolQuery.filter(QueryBuilders.rangeQuery("ctime").gte(beforeDate.getTime() / 1000));
+        }
         boolQuery.filter(QueryBuilders.termsQuery("mid", uid));
 
         builder.query(boolQuery);
@@ -136,7 +143,9 @@ public class VideoService {
 
         SearchRequest searchRequest = new SearchRequest(ElasticSearchUtil.VIDEO_DETAIL_INDEX);
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-        boolQuery.filter(QueryBuilders.rangeQuery("ctime").gte(beforeDate.getTime() / 1000));
+        if (beforeDate != null) {
+            boolQuery.filter(QueryBuilders.rangeQuery("ctime").gte(beforeDate.getTime() / 1000));
+        }
         boolQuery.filter(QueryBuilders.termsQuery("mid", uid));
 
         builder.query(boolQuery);
@@ -247,7 +256,7 @@ public class VideoService {
         }
     }
 
-    public List<String> getVideosTName(String uid) throws IOException {
+    public List<String> getVideosTag(String uid) throws IOException {
 
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
         boolQuery.filter(QueryBuilders.termQuery("mid", uid));
@@ -274,12 +283,12 @@ public class VideoService {
     }
 
 
-    public List<String> getVideosTagsName(String uid) throws IOException {
+    public List<String> getVideosTNames(String uid) throws IOException {
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-        boolQuery.filter(QueryBuilders.termQuery("mid", uid));
-
+        if (uid != null) {
+            boolQuery.filter(QueryBuilders.termQuery("mid", uid));
+        }
         TermsAggregationBuilder term_agg = AggregationBuilders.terms("tName").field("tName");
-
 
         SearchSourceBuilder builder = new SearchSourceBuilder();
 
@@ -301,14 +310,29 @@ public class VideoService {
 
     public PublicOptionsResponseVo getPublicOptions(String uid) throws IOException {
         PublicOptionsResponseVo vo = new PublicOptionsResponseVo();
-        BarWrapper replyBar = getWordCloud("reply_text.message", uid);
-        BarWrapper danmakuBar = getWordCloud("danmaku_text", uid);
+        BarWrapper replyBar = getWordCloud("reply_text.message", uid, null);
+        BarWrapper danmakuBar = getWordCloud("danmaku_text", uid, null);
         vo.setReplyBar(replyBar);
         vo.setDanmakuBar(danmakuBar);
         return vo;
     }
 
-    private BarWrapper getWordCloud(String field, String uid) throws IOException {
+    public PublicOptionsResponseVo getVideoPublicReplyOptions(String uid, String bvid) throws IOException {
+        PublicOptionsResponseVo vo = new PublicOptionsResponseVo();
+        BarWrapper replyBar = getWordCloud("reply_text.message", uid, bvid);
+        vo.setReplyBar(replyBar);
+        return vo;
+    }
+
+    public PublicOptionsResponseVo getPublicDanmakuOptions(String uid, String bvid) throws IOException {
+        PublicOptionsResponseVo vo = new PublicOptionsResponseVo();
+        BarWrapper danmakuBar = getWordCloud("danmaku_text", uid, bvid);
+        vo.setDanmakuBar(danmakuBar);
+        return vo;
+    }
+
+    private BarWrapper getWordCloud(String field, String uid, String bvid) throws IOException {
+
         TermQueryBuilder termUID = QueryBuilders.termQuery("mid", uid);
 
         StringBuilder regExp = new StringBuilder("[\u4E00-\u9FA5][\u4E00-\u9FA5]");
@@ -322,6 +346,9 @@ public class VideoService {
             term_agg.includeExclude(new IncludeExclude(regExp.toString(), null));
             regExp.append("[\u4E00-\u9FA5]");
             builder.query(termUID);
+            if (bvid != null) {
+                builder.query(QueryBuilders.termQuery("bvid", bvid));
+            }
             builder.aggregation(term_agg);
             request.source(builder);
             SearchResponse response = esClient.search(request, ElasticSearchConfig.COMMON_OPTIONS);
@@ -349,7 +376,7 @@ public class VideoService {
     }
 
 
-    public List<VideoReplyContainOrigin> getReplyList(String uid, String keyword, Integer period) throws IOException {
+    public List<VideoReplyContainOrigin> getReplyList(String uid, String keyword, Integer period, String bvid,Integer from, Integer size) throws IOException {
         SearchRequest request = new SearchRequest(ElasticSearchUtil.REPLIES_INDEX);
         SearchSourceBuilder builder = new SearchSourceBuilder();
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
@@ -360,7 +387,12 @@ public class VideoService {
         if (period != null && period > 0) {
             boolQuery.filter(QueryBuilders.rangeQuery("ctime").gte(DateUtil.getBeforeDate(period).getTime() / 1000));
         }
+        if (!StringUtils.isEmpty(bvid)) {
+            boolQuery.filter(QueryBuilders.termQuery("bvid",bvid));
+        }
         builder.query(boolQuery);
+        builder.sort("like",SortOrder.DESC);
+        esPageHelper(builder,new Page(from,size));
         request.source(builder);
 
         SearchResponse response = esClient.search(request, ElasticSearchConfig.COMMON_OPTIONS);
@@ -373,7 +405,32 @@ public class VideoService {
 
         }
 
-        list.sort((o, n) -> n.getLike() - o.getLike());
+//        list.sort((o, n) -> n.getLike() - o.getLike());
+
+        return list;
+    }
+
+    public List<String> getDanmakuList(String uid, String bvid) throws IOException {
+        SearchRequest request = new SearchRequest(ElasticSearchUtil.VIDEO_DETAIL_INDEX);
+        SearchSourceBuilder builder = new SearchSourceBuilder();
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        boolQuery.filter(QueryBuilders.termQuery("mid", uid));
+        if (!StringUtils.isEmpty(bvid)) {
+            boolQuery.filter(QueryBuilders.termQuery("bvid",bvid));
+        }
+        builder.query(boolQuery);
+        builder.fetchSource("danmaku_text",null);
+        request.source(builder);
+        SearchResponse response = esClient.search(request, ElasticSearchConfig.COMMON_OPTIONS);
+        SearchHit[] hits = response.getHits().getHits();
+        List<String> list = new ArrayList<>();
+        for (SearchHit hit : hits) {
+            List o = (List)hit.getSourceAsMap().get("danmaku_text");
+            if (o != null) {
+                list.addAll(o);
+            }
+        }
+
 
         return list;
     }

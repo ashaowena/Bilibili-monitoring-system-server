@@ -26,24 +26,43 @@ public class TranslateServer {
     UpStatusDAO upStatusDAO;
 
     @Autowired
-    MonitorServer monitorServer;
-
-    @Autowired
     TranslateProcess translateProcess;
 
 
-    public ChartWrapper translateToChar(List<UpStatus> dailyStatus) {
+    public ChartWrapper translateToChar(List<UpStatus> dailyStatus, Integer period) {
         ChartWrapper wrapper = new ChartWrapper();
+        if (dailyStatus == null || dailyStatus.size() != period) {
+            for (int i = 0, j = 10 - wrapper.getChart_X().size(); i < j; i++) {
+                wrapper.getChart_X().add("-");
+            }
+            return wrapper;
+        }
         for (UpStatus status : dailyStatus) {
             wrapper.add(status);
         }
+
+
         return wrapper;
     }
 
-    public ChartWrapper translateToIncChar(List<UpStatusAfterTranslatedVo> dailyTranslatedVos) {
+    public ChartWrapper translateToIncChar(List<UpStatusAfterTranslatedVo> dailyTranslatedVos, Integer period) {
         ChartWrapper wrapper = new ChartWrapper();
+//        if (dailyTranslatedVos == null || dailyTranslatedVos.size() != period) {
+//            for (int i = 0, j = 10 - wrapper.getChart_X().size(); i < j; i++) {
+//                wrapper.getChart_X().add("-");
+//            }
+//            return wrapper;
+//        }
+        if (dailyTranslatedVos == null) {
+            return null;
+        }
+
         for (UpStatusAfterTranslatedVo dailyTranslatedVo : dailyTranslatedVos) {
             wrapper.add(dailyTranslatedVo);
+        }
+
+        for (int i = 0, j = 10 - wrapper.getChart_X().size(); i < j; i++) {
+            wrapper.getChart_X().add("-");
         }
         return wrapper;
     }

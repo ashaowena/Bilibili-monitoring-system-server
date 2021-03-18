@@ -1,6 +1,6 @@
-package com.yunchuan.bilibili.client.netty;
+package com.yunchuan.bilibili.client;
 
-import com.yunchuan.bilibili.client.RequestFactory;
+
 
 public enum RequestPath {
 

@@ -6,6 +6,12 @@ import lombok.Data;
 @Data
 public class Page {
 
+    public Page(){}
+
+    public Page(Integer from, Integer size) {
+        this.currPage = from;
+        this.pageSize = size;
+    }
     /**
      * 总记录数
      */

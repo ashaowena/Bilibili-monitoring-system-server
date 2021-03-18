@@ -42,9 +42,9 @@ public class VideoListController {
      * @return
      */
     @ResponseBody
-    @RequestMapping("/VideoTName")
-    public R showVideosTag(@RequestParam String uid) throws IOException {
-        List<String> tags = videoService.getVideosTName(uid);
+    @RequestMapping("/VideoTags")
+    public R showVideosTName(@RequestParam String uid) throws IOException {
+        List<String> tags = videoService.getVideosTag(uid);
         return R.ok().setData(tags);
     }
 
@@ -54,11 +54,13 @@ public class VideoListController {
      * @return
      */
     @ResponseBody
-    @RequestMapping("/VideoTag")
-    public R showVideosTname(@RequestParam String uid) throws IOException {
-        List<String> tags = videoService.getVideosTagsName(uid);
+    @RequestMapping("/VideoTNames")
+    public R showVideoTag(@RequestParam String uid) throws IOException {
+        List<String> tags = videoService.getVideosTNames(uid);
         return R.ok().setData(tags);
     }
+
+
 
     /**
      * 作品概览
@@ -69,11 +71,18 @@ public class VideoListController {
      */
     @ResponseBody
     @RequestMapping("/ProductionsAbstract")
-    public R showVideoAbstract(@RequestParam String uid,@RequestParam Integer type,@RequestParam Integer period) throws IOException {
+    public R showVideoAbstract(@RequestParam String uid,@RequestParam Integer type,@RequestParam(defaultValue = "0") Integer period) throws IOException {
         VideosAbstractResponseVo videosAbstract = videoService.getVideoAbstract(uid,type,period);
         return R.ok().setData(videosAbstract);
     }
 
+
+    /**
+     * Up主弹幕与评论
+     * @param uid
+     * @return
+     * @throws IOException
+     */
     @ResponseBody
     @RequestMapping("/PublicOption")
     public R getPublicOptions(@RequestParam String uid) throws IOException {
@@ -81,11 +90,63 @@ public class VideoListController {
         return R.ok().setData(vo);
     }
 
+    /**
+     * 单个视频评论
+     * @param uid
+     * @param bvid
+     * @return
+     * @throws IOException
+     */
+    @ResponseBody
+    @RequestMapping("/PublicReplyOption")
+    public R getVideoReplyPublicOptions(@RequestParam String uid,@RequestParam String bvid) throws IOException {
+        PublicOptionsResponseVo vo = videoService.getVideoPublicReplyOptions(uid, bvid);
+        return R.ok().setData(vo);
+    }
+
+    /**
+     * 单个视频弹幕
+     * @param uid
+     * @param bvid
+     * @return
+     * @throws IOException
+     */
+    @ResponseBody
+    @RequestMapping("/PublicDanmakuOption")
+    public R getVideoDanmakuPublicOptions(@RequestParam String uid,@RequestParam String bvid) throws IOException {
+        PublicOptionsResponseVo vo = videoService.getPublicDanmakuOptions(uid, bvid);
+        return R.ok().setData(vo);
+    }
+
+    /**
+     * 单个视频评论具体内容
+     * @param uid
+     * @param period
+     * @param keyword
+     * @param bvid
+     * @return
+     * @throws IOException
+     */
     @ResponseBody
     @RequestMapping("/ReplyList")
-    public R getReplies(@RequestParam String uid, @RequestParam(required = false) Integer period, @RequestParam(required = false) String keyword) throws IOException {
-        List<VideoReplyContainOrigin> replyList = videoService.getReplyList(uid,keyword,period);
+    public R getReplies(@RequestParam String uid, @RequestParam(required = false) Integer period, @RequestParam(required = false) String keyword, @RequestParam(required = false) String bvid,@RequestParam Integer from, @RequestParam Integer size) throws IOException {
+        List<VideoReplyContainOrigin> replyList = videoService.getReplyList(uid,keyword,period, bvid,from,size);
         return R.ok().setData(replyList);
     }
+
+    /**
+     * 单个视频弹幕
+     * @param uid
+     * @param bvid
+     * @return
+     * @throws IOException
+     */
+    @ResponseBody
+    @RequestMapping("/DanmakuList")
+    public R getDanmaku(@RequestParam String uid, @RequestParam String bvid) throws IOException {
+        List<String> danmakuList = videoService.getDanmakuList(uid, bvid);
+        return R.ok().setData(danmakuList);
+    }
+
 
 }

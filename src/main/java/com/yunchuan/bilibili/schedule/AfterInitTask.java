@@ -8,7 +8,6 @@ import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
-import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
@@ -16,6 +15,7 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+
 
 @Service
 @Slf4j
@@ -56,8 +56,7 @@ public class AfterInitTask implements ApplicationListener<ContextRefreshedEvent>
         try {
             esClient.indices().create(videos_index, RequestOptions.DEFAULT);
         } catch (ElasticsearchStatusException e) {
-//            log.info("索引" + videos_index + "已存在，无需重复创建");
-            System.out.println(e.getMessage());
+            log.info("\"videos_index\"索引已存在");
         } catch (IOException e) {
             log.info("ES连接失败");
         }
@@ -65,8 +64,7 @@ public class AfterInitTask implements ApplicationListener<ContextRefreshedEvent>
         try {
             esClient.indices().create(replies_index, RequestOptions.DEFAULT);
         } catch (ElasticsearchStatusException e) {
-//            log.info("索引" + replies_index +"已存在，无需重复创建");
-            System.out.println(e.getMessage());
+            log.info("\"replies_index\"索引已存在");
         } catch (IOException e) {
             log.info("ES连接失败");
         }
@@ -100,5 +98,10 @@ public class AfterInitTask implements ApplicationListener<ContextRefreshedEvent>
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+//        ArrayList<Object> objects = new ArrayList<>();
+//        while (true) {
+//            objects.add(new Object());
+//        }
     }
 }

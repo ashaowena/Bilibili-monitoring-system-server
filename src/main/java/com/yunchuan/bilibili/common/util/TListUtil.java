@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.util.StringUtils;
 
 
 import java.util.HashSet;
@@ -13,7 +14,7 @@ import java.util.Set;
 public class TListUtil {
 
     public static Set<TWrapper> getTWrapperSet(String content) {
-        if (content == null) {
+        if (StringUtils.isEmpty(content)) {
             return null;
         }
         JSONObject tList = JSONObject.parseObject(content).getJSONObject("data").getJSONObject("list").getJSONObject("tlist");
