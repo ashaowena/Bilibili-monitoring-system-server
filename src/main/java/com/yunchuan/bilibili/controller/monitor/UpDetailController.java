@@ -67,7 +67,7 @@ public class UpDetailController {
     @ResponseBody
     @RequestMapping("/periodDetail")
     public R getPeriodDetail(@RequestParam Integer period,@RequestParam String uid ,HttpSession session) {
-        MonitorResponseVo vo = (MonitorResponseVo)session.getAttribute("monitorResponse");
+//        MonitorResponseVo vo = (MonitorResponseVo)session.getAttribute("monitorResponse");
         PeriodDetailResponseVo periodDetailResponseVo = new PeriodDetailResponseVo();
         // 设置概况数据(移至上面接口实现)
 //        List<UpStatusAfterTranslatedVo> translatedVos = translateServer.smartTranslate(uid, period);

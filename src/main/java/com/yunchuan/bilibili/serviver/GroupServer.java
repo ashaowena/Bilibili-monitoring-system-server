@@ -22,9 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @Slf4j
@@ -115,23 +114,28 @@ public class GroupServer {
 
     public void getMonitorUp(MonitorResponseVo vo) {
         List<UpGroupVo> upgroups = vo.getUpgroups();
+        Set<CompletableFuture> syncSet = Collections.synchronizedSet(new HashSet<CompletableFuture>());
         for (UpGroupVo upGroupVo : upgroups) {
-            List<UpVo> upVos = upGroupVo.getUpVos();
+            List<UpVo> upVos = Collections.synchronizedList(upGroupVo.getUpVos());
             for (UpVo upVo : upVos) {
-                List<UpStatusAfterTranslatedVo> translated = null;
-                UpInfoVo upInfo = null;
-                try {
-                    upInfo = monitorServer.getUpInfo(upVo.getUid());
-                    // 转化为增长量
-                    translated = monitorServer.translateServer.translate(upVo.getUid());
-                } catch (Exception e) {
-                    System.out.println(e.getMessage());
-                    log.warn("获取信息错误");
-                }
-                upVo.setInfo(upInfo);
-                upVo.setUsat(translated);
+                CompletableFuture<Void> sync = CompletableFuture.runAsync(() -> {
+                    List<UpStatusAfterTranslatedVo> translated = null;
+                    UpInfoVo upInfo = null;
+                    try {
+                        upInfo = monitorServer.getUpInfo(upVo.getUid());
+                        // 转化为增长量
+                        translated = monitorServer.translateServer.translate(upVo.getUid());
+                    } catch (Exception e) {
+                        System.out.println(e.getMessage());
+                        log.warn("获取信息错误");
+                    }
+                    upVo.setInfo(upInfo);
+                    upVo.setUsat(translated);
+                });
+                syncSet.add(sync);
             }
         }
+        CompletableFuture.allOf(syncSet.toArray(new CompletableFuture[0])).join();
     }
 
 
