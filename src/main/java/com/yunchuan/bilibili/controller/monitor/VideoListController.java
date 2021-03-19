@@ -130,7 +130,7 @@ public class VideoListController {
     @ResponseBody
     @RequestMapping("/ReplyList")
     public R getReplies(@RequestParam String uid, @RequestParam(required = false) Integer period, @RequestParam(required = false) String keyword, @RequestParam(required = false) String bvid,@RequestParam Integer from, @RequestParam Integer size) throws IOException {
-        List<VideoReplyContainOrigin> replyList = videoService.getReplyList(uid,keyword,period, bvid,from,size);
+        List<VideoReplyContainOrigin> replyList = videoService.getReplyList(uid, keyword, period, bvid, from, size);
         return R.ok().setData(replyList);
     }
 

@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @Service
 @Slf4j
@@ -25,6 +26,9 @@ public class UpsManagerService {
 
     @Autowired
     MonitorServer monitorServer;
+
+    @Autowired
+    ThreadPoolExecutor executor;
 
     /**
      * 通过定时任务清除过期的up主信息

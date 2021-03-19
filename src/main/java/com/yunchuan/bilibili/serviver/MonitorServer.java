@@ -94,6 +94,7 @@ public class MonitorServer {
      * @throws InterruptedException
      */
     public UpStatus doMonitorUp(String uid, boolean shouldQueryDetail) throws Exception {
+
         // 1、获取用户的关注数、粉丝数
         UpStatus upStatus = existingUpStatus(uid);
         if (upStatus == null) {
@@ -136,6 +137,7 @@ public class MonitorServer {
         upStatus.setDate(new Date());
         return upStatus;
     }
+
 
     private void getAndSaveVideoDetail(Set<VideoDetailEntity> bvids) throws Exception {
 

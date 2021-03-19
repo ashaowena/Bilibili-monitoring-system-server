@@ -9,8 +9,10 @@ import org.springframework.util.CollectionUtils;
 
 
 import java.net.URI;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.LongAdder;
 
 @Slf4j
 public class RequestFactory {
@@ -74,6 +76,7 @@ public class RequestFactory {
      */
     public static final String VIDEO_DANMAKU = "/x/v1/dm/list.so";
 
+    private static LongAdder adder = new LongAdder();
 
 //    public static FullHttpRequest getNettyRequest(RequestPath path, String uid, int page) throws Exception {
 //        String fullPath = addParam(uid,path,page,"0");
@@ -128,6 +131,9 @@ public class RequestFactory {
         URI uri = new URI(fullPath);
 
         log.info("访问路径：" + fullPath);
+
+        adder.increment();
+        log.error(adder.longValue() + "   " + LocalTime.now().toString());
 
         HttpUriRequest request = RequestBuilder.create(HttpGet.METHOD_NAME)
                 .setUri(uri)

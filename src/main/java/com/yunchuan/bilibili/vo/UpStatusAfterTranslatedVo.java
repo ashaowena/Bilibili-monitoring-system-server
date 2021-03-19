@@ -61,4 +61,20 @@ public class UpStatusAfterTranslatedVo {
         vo.dProductions = upStatus0.getProductions() - upStatus1.getProductions();
         return vo;
     }
+
+    public static UpStatusAfterTranslatedVo build(UpStatus upStatus) {
+        UpStatusAfterTranslatedVo vo = new UpStatusAfterTranslatedVo();
+        vo.date = upStatus.getDate();
+        vo.uid = upStatus.getUid();
+        vo.dFans = upStatus.getFans();
+        vo.dView = upStatus.getView() ;
+        vo.dDanmaku = upStatus.getDanmaku() ;
+        vo.dReply = upStatus.getReply() ;
+        vo.dFavorite = upStatus.getFavorite() ;
+        vo.dCoin = upStatus.getCoin() ;
+        vo.dShare = upStatus.getShare();
+        vo.dLike = upStatus.getLike();
+        vo.dProductions = upStatus.getProductions() ;
+        return vo;
+    }
 }

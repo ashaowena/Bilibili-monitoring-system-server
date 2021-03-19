@@ -390,6 +390,7 @@ public class VideoService {
         if (!StringUtils.isEmpty(bvid)) {
             boolQuery.filter(QueryBuilders.termQuery("bvid",bvid));
         }
+
         builder.query(boolQuery);
         builder.sort("like",SortOrder.DESC);
         esPageHelper(builder,new Page(from,size));

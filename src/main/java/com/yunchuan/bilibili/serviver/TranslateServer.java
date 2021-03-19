@@ -84,7 +84,7 @@ public class TranslateServer {
         }
         List<UpStatus> temp = dailyStatus.subList(0, dailyStatus.size());
         temp.add(status);
-        return doSmartTranslate(temp);
+        return doSmartTranslatePeriod(temp);
 
     }
 
@@ -153,8 +153,24 @@ public class TranslateServer {
         }
 
         List<UpStatusAfterTranslatedVo> translatedVos = new ArrayList<UpStatusAfterTranslatedVo>();
+        for (int i = 0; i < upStatuses.size(); i++) {
+            UpStatusAfterTranslatedVo usat = UpStatusAfterTranslatedVo.build(upStatuses.get(i));
+            translatedVos.add(usat);
+        }
+
+        return translatedVos;
+
+    }
+
+    public List<UpStatusAfterTranslatedVo> doSmartTranslatePeriod(List<UpStatus> upStatuses) {
+
+        if (CollectionUtils.isEmpty(upStatuses)) {
+            return null;
+        }
+
+        List<UpStatusAfterTranslatedVo> translatedVos = new ArrayList<UpStatusAfterTranslatedVo>();
         for (int i = 0; i < upStatuses.size() - 1; i++) {
-            UpStatusAfterTranslatedVo usat = UpStatusAfterTranslatedVo.build(upStatuses.get(i), upStatuses.get(i + 1));
+            UpStatusAfterTranslatedVo usat = UpStatusAfterTranslatedVo.build(upStatuses.get(i),upStatuses.get(i + 1));
             translatedVos.add(usat);
         }
 
@@ -163,116 +179,86 @@ public class TranslateServer {
     }
 
     private List<UpStatus> smartGetUpStatus(String uid, DateUtil period) {
-        Date before = DateUtil.getBeforeDate(period.PERIOD * 3 - 1);
         Date now = DateUtil.getNowDate();
-        List<UpStatus> upStatuses = upStatusDAO.selectList(new QueryWrapper<UpStatus>().eq("uid", uid).between("date", before, now).orderByDesc("date"));
-        if (upStatuses == null || upStatuses.size() < period.PERIOD * 2) {
+        Date before = DateUtil.getBeforeDate(period.PERIOD * 2 - 1);
+        Date preBefore = DateUtil.getBeforeDate(period.PERIOD * 3 - 1);
+        UpStatus nowData = upStatusDAO.selectOne(new QueryWrapper<UpStatus>().eq("uid", uid).eq("date", now));
+        UpStatus beforeData = upStatusDAO.selectOne(new QueryWrapper<UpStatus>().eq("uid", uid).eq("date", before));
+        UpStatus preBeforeData = upStatusDAO.selectOne(new QueryWrapper<UpStatus>().eq("uid", uid).eq("date", preBefore));
+
+        if (nowData == null && beforeData == null && preBeforeData == null) {
             log.info("不足两个周期，无法计算");
             return null;
         }
 
-        translateProcess.upStatusesProcess(upStatuses);
 
-        if (upStatuses.size() == period.PERIOD * 3) {
-            List<UpStatus> upStatuses3Period = agg3PeriodUpStatus(upStatuses);
-            return upStatuses3Period;
-        } else {
-            List<UpStatus> subList = upStatuses.subList(0, period.PERIOD * 2);
-            List<UpStatus> UpStatuses2Period = agg2PeriodUpStatus(subList);
-            return UpStatuses2Period;
+        if (nowData != null && beforeData != null && preBeforeData != null) {
+            return agg3PeriodUpStatus(nowData, beforeData, preBeforeData);
+        } else if (nowData != null && beforeData != null) {
+            return agg2PeriodUpStatus(nowData, beforeData);
         }
+
+        log.info("条件不满足周期");
+        return new ArrayList<UpStatus>();
 
     }
 
 
     // 获取2个周期内的总和数据
-    private List<UpStatus> agg2PeriodUpStatus(List<UpStatus> upStatuses) {
-        if (upStatuses.size() % 2 != 0) {
-            log.info("数据有误或不足，无法聚合基期");
-            return null;
-        }
+    private List<UpStatus> agg2PeriodUpStatus(UpStatus now, UpStatus before) {
+
 
         List<UpStatus> periodUpStatus = new ArrayList<>();
         UpStatus periodHeadUpStatus = new UpStatus().init();
-        upStatuses.stream().limit(upStatuses.size() / 2).forEach(u -> {
-            periodHeadUpStatus.setFavorite(periodHeadUpStatus.getFavorite() + u.getFavorite());
-            periodHeadUpStatus.setShare(periodHeadUpStatus.getShare() + u.getShare());
-            periodHeadUpStatus.setReply(periodHeadUpStatus.getReply() + u.getReply());
-            periodHeadUpStatus.setDanmaku(periodHeadUpStatus.getDanmaku() + u.getDanmaku());
-            periodHeadUpStatus.setCoin(periodHeadUpStatus.getCoin() + u.getCoin());
-            periodHeadUpStatus.setProductions(periodHeadUpStatus.getProductions() + u.getProductions());
-            periodHeadUpStatus.setFans(periodHeadUpStatus.getFans() + u.getFans());
-            periodHeadUpStatus.setLike(periodHeadUpStatus.getLike() + u.getLike());
-            periodHeadUpStatus.setView(periodHeadUpStatus.getView() + u.getView());
-        });
-        UpStatus periodTailUpStatus = new UpStatus().init();
-        upStatuses.stream().skip(upStatuses.size() / 2).forEach(u -> {
-            periodTailUpStatus.setFavorite(periodTailUpStatus.getFavorite() + u.getFavorite());
-            periodTailUpStatus.setShare(periodTailUpStatus.getShare() + u.getShare());
-            periodTailUpStatus.setReply(periodTailUpStatus.getReply() + u.getReply());
-            periodTailUpStatus.setDanmaku(periodTailUpStatus.getDanmaku() + u.getDanmaku());
-            periodTailUpStatus.setCoin(periodTailUpStatus.getCoin() + u.getCoin());
-            periodTailUpStatus.setProductions(periodTailUpStatus.getProductions() + u.getProductions());
-            periodTailUpStatus.setFans(periodTailUpStatus.getFans() + u.getFans());
-            periodTailUpStatus.setLike(periodTailUpStatus.getLike() + u.getLike());
-            periodTailUpStatus.setView(periodTailUpStatus.getView() + u.getView());
 
-        });
+        periodHeadUpStatus.setFavorite(now.getFavorite() - before.getFavorite());
+        periodHeadUpStatus.setShare(now.getShare() - before.getShare());
+        periodHeadUpStatus.setReply(now.getReply() - before.getReply());
+        periodHeadUpStatus.setDanmaku(now.getDanmaku() - before.getDanmaku());
+        periodHeadUpStatus.setCoin(now.getCoin() - before.getCoin());
+        periodHeadUpStatus.setProductions(now.getProductions() - before.getProductions());
+        periodHeadUpStatus.setFans(now.getFans() - before.getFans());
+        periodHeadUpStatus.setLike(now.getLike() - before.getLike());
+        periodHeadUpStatus.setView(now.getView() - before.getView());
+
+
         periodUpStatus.add(periodHeadUpStatus);
-        periodUpStatus.add(periodTailUpStatus);
         return periodUpStatus;
     }
 
     // 获取3个周期内的总和数据
-    private List<UpStatus> agg3PeriodUpStatus(List<UpStatus> upStatuses) {
-        if (upStatuses.size() % 3 != 0) {
-            log.info("数据有误或不足，无法聚合基期");
-            return null;
-        }
+    private List<UpStatus> agg3PeriodUpStatus(UpStatus now, UpStatus before, UpStatus preBefore) {
+
 
         List<UpStatus> periodUpStatus = new ArrayList<>();
         UpStatus periodHeadUpStatus = new UpStatus().init();
-        upStatuses.stream().limit(upStatuses.size() / 3).forEach(u -> {
-            periodHeadUpStatus.setFavorite(periodHeadUpStatus.getFavorite() + u.getFavorite());
-            periodHeadUpStatus.setShare(periodHeadUpStatus.getShare() + u.getShare());
-            periodHeadUpStatus.setReply(periodHeadUpStatus.getReply() + u.getReply());
-            periodHeadUpStatus.setDanmaku(periodHeadUpStatus.getDanmaku() + u.getDanmaku());
-            periodHeadUpStatus.setCoin(periodHeadUpStatus.getCoin() + u.getCoin());
-            periodHeadUpStatus.setProductions(periodHeadUpStatus.getProductions() + u.getProductions());
-            periodHeadUpStatus.setFans(periodHeadUpStatus.getFans() + u.getFans());
-            periodHeadUpStatus.setLike(periodHeadUpStatus.getLike() + u.getLike());
-            periodHeadUpStatus.setView(periodHeadUpStatus.getView() + u.getView());
-        });
+
+        periodHeadUpStatus.setFavorite(now.getFavorite() - before.getFavorite());
+        periodHeadUpStatus.setShare(now.getShare() - before.getShare());
+        periodHeadUpStatus.setReply(now.getReply() - before.getReply());
+        periodHeadUpStatus.setDanmaku(now.getDanmaku() - before.getDanmaku());
+        periodHeadUpStatus.setCoin(now.getCoin() - before.getCoin());
+        periodHeadUpStatus.setProductions(now.getProductions() - before.getProductions());
+        periodHeadUpStatus.setFans(now.getFans() - before.getFans());
+        periodHeadUpStatus.setLike(now.getLike() - before.getLike());
+        periodHeadUpStatus.setView(now.getView() - before.getView());
+
 
         UpStatus periodMiddleUpStatus = new UpStatus().init();
-        upStatuses.stream().skip(upStatuses.size() / 3).limit(upStatuses.size() / 3).forEach(u -> {
-            periodMiddleUpStatus.setFavorite(periodMiddleUpStatus.getFavorite() + u.getFavorite());
-            periodMiddleUpStatus.setShare(periodMiddleUpStatus.getShare() + u.getShare());
-            periodMiddleUpStatus.setReply(periodMiddleUpStatus.getReply() + u.getReply());
-            periodMiddleUpStatus.setDanmaku(periodMiddleUpStatus.getDanmaku() + u.getDanmaku());
-            periodMiddleUpStatus.setCoin(periodMiddleUpStatus.getCoin() + u.getCoin());
-            periodMiddleUpStatus.setProductions(periodMiddleUpStatus.getProductions() + u.getProductions());
-            periodMiddleUpStatus.setFans(periodMiddleUpStatus.getFans() + u.getFans());
-            periodMiddleUpStatus.setLike(periodMiddleUpStatus.getLike() + u.getLike());
-            periodMiddleUpStatus.setView(periodMiddleUpStatus.getView() + u.getView());
 
-        });
+        periodMiddleUpStatus.setFavorite(before.getFavorite() - preBefore.getFavorite());
+        periodMiddleUpStatus.setShare(before.getShare() - preBefore.getShare());
+        periodMiddleUpStatus.setReply(before.getReply() - preBefore.getReply());
+        periodMiddleUpStatus.setDanmaku(before.getDanmaku() - preBefore.getDanmaku());
+        periodMiddleUpStatus.setCoin(before.getCoin() - preBefore.getCoin());
+        periodMiddleUpStatus.setProductions(before.getProductions() - preBefore.getProductions());
+        periodMiddleUpStatus.setFans(before.getFans() - preBefore.getFans());
+        periodMiddleUpStatus.setLike(before.getLike() - preBefore.getLike());
+        periodMiddleUpStatus.setView(before.getView() - preBefore.getView());
 
-        UpStatus periodTailUpStatus = new UpStatus().init();
-        upStatuses.stream().skip(upStatuses.size() * 2 / 3).forEach(u -> {
-            periodTailUpStatus.setFavorite(periodTailUpStatus.getFavorite() + u.getFavorite());
-            periodTailUpStatus.setShare(periodTailUpStatus.getShare() + u.getShare());
-            periodTailUpStatus.setReply(periodTailUpStatus.getReply() + u.getReply());
-            periodTailUpStatus.setDanmaku(periodTailUpStatus.getDanmaku() + u.getDanmaku());
-            periodTailUpStatus.setCoin(periodTailUpStatus.getCoin() + u.getCoin());
-            periodTailUpStatus.setProductions(periodTailUpStatus.getProductions() + u.getProductions());
-            periodTailUpStatus.setFans(periodTailUpStatus.getFans() + u.getFans());
-            periodTailUpStatus.setLike(periodTailUpStatus.getLike() + u.getLike());
-            periodTailUpStatus.setView(periodTailUpStatus.getView() + u.getView());
-        });
+
         periodUpStatus.add(periodHeadUpStatus);
         periodUpStatus.add(periodMiddleUpStatus);
-        periodUpStatus.add(periodTailUpStatus);
         return periodUpStatus;
     }
 
