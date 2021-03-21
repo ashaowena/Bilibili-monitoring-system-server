@@ -133,7 +133,7 @@ public class RequestFactory {
         log.info("访问路径：" + fullPath);
 
         adder.increment();
-        log.error(adder.longValue() + "   " + LocalTime.now().toString());
+        log.info(adder.longValue() + "   " + LocalTime.now().toString());
 
         HttpUriRequest request = RequestBuilder.create(HttpGet.METHOD_NAME)
                 .setUri(uri)
