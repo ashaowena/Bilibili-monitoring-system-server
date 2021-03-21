@@ -44,15 +44,6 @@
             <artifactId>httpclient</artifactId>
             <version>4.5.12</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter-cache</artifactId>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>io.netty</groupId>-->
-<!--            <artifactId>netty-all</artifactId>-->
-<!--            <version>4.1.42.Final</version>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
@@ -114,7 +105,32 @@
     </dependencyManagement>
 
     <build>
-        <plugins>
+
+            <plugins>
+                <plugin>
+                    <groupId>com.spotify</groupId>
+                    <artifactId>docker-maven-plugin</artifactId>
+                    <version>0.4.13</version>
+                    <configuration>
+                        <forceTags>true</forceTags>    <!--覆盖相同标签镜像-->
+                        <imageName>my/bilibili:0.0.1</imageName>  <!--指定镜像名称 仓库/镜像名:标签-->
+                        <baseImage>lwieske/java-8</baseImage>    <!--指定基础镜像，相当于dockerFile中的FROM<image> -->
+                        <dockerHost>http://192.168.10.72:2375</dockerHost>  <!-- 指定仓库地址 -->
+                        <entryPoint>["java","-jar","/${project.build.finalName}.jar"]</entryPoint> <!-- 容器启动执行的命令，相当于dockerFile的ENTRYPOINT -->
+                        <resources>
+                            <resource>                                             <!-- 指定资源文件 -->
+                                <targetPath>/</targetPath>                         <!-- 指定要复制的目录路径，这里是当前目录 -->
+                                <directory>${project.build.directory}</directory>  <!-- 指定要复制的根目录，这里是target目录 -->
+                                <include>${project.build.finalName}.jar</include>  <!-- 指定需要拷贝的文件，这里指最后生成的jar包 -->
+                            </resource>
+                        </resources>
+
+                    </configuration>
+                </plugin>
+
+
+
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
