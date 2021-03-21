@@ -16,7 +16,5 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 public class BilibiliApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(BilibiliApplication.class, args);
-    }
-
+        SpringApplication.run(BilibiliApplication.class, args);}
 }
