@@ -84,8 +84,9 @@
 ## 如何安装？
 
 ### 环境搭建
-需要预先安装ES 7.10.1 和 mysql,然后从项目的 resources/db 中拿到bilibili.sql文件并执行mysql脚本，ES索引会在每次项目启动时自动创建，故不需要自己手动创建
+需要预先安装ES 7.10.1 ,对应版本的ik分词器和 mysql,然后从项目的 resources/db 中拿到bilibili.sql文件并执行mysql脚本，ES索引会在每次项目启动时自动创建，故不需要自己手动创建
 线程池大小需要在配置文件中根据自己监控Up的数量进行调配
+然后去RequestFactory类把Cookie换成自己B站上的Cookie,浏览器上登陆B站然后考下来就行
 ### 拉取仓库:
 直接克隆客户端Bilibili-monitoring-system-client和服务端Bilibili-monitoring-system-server到本地开发工具运行
 ### 注意事项

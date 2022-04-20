@@ -25,7 +25,10 @@ public class RequestFactory {
 
     public static final String HOST = "i2.hdslb.com";
 
-    public static final String COOKIE = "rpdid=|(J~RYulJ)l~0J'uY|~kukm)m; _uuid=A42877F8-AC1C-03B9-4779-A701396DC64951124infoc; sid=jz20xwgt; fingerprint3=fc09a567f5774a036bcd6cede5d52e66; fingerprint=e7a01a0b0c91961fabe0a16607c48070; CURRENT_FNVAL=80; blackside_state=1; CURRENT_QUALITY=64; LIVE_BUVID=AUTO6516090784803684; buvid3=B0D867F6-3793-4545-9429-A3CFA9C8141E95183infoc; buivd_fp=B0D867F6-3793-4545-9429-A3CFA9C8141E95183infoc; buvid_fp_plain=B0D867F6-3793-4545-9429-A3CFA9C8141E95183infoc; DedeUserID=20686463; DedeUserID__ckMd5=5c3e0bf99a3fb5aa; SESSDATA=5259c9dd%2C1624832297%2Cd8cc7*c1; bili_jct=345caf8df143762d0be8d08b96b79214; buvid_fp=B0D867F6-3793-4545-9429-A3CFA9C8141E95183infoc; fingerprint_s=21c51e69a053984361fa9b7600f53c19; PVID=2; bp_video_offset_20686463=487938547175044113; bfe_id=6f285c892d9d3c1f8f020adad8bed553";
+    /**
+     * 重要，换成自己B站的Cookie!
+     */
+    public static final String COOKIE = "buvid3=4F8681D8-0FB5-4EE1-9EBE-FB40263F2379143093infoc; blackside_state=1; rpdid=|(J~RYulJm|)0J'uY|k)kJ)Ju; LIVE_BUVID=AUTO1716092323509462; fingerprint3=daf258adb06fd18fa47d435617da81ba; fingerprint_s=acfba511d9282ca18d9aacb7153e3970; _uuid=CDD8688E-5AEB-A9A2-B8A0-BE08AD429D9502191infoc; CURRENT_QUALITY=0; video_page_version=v_old_home; PVID=1; CURRENT_BLACKGAP=0; i-wanna-go-back=-1; buvid_fp_plain=undefined; buvid4=E7E8C5EC-EAEC-0D96-BEA8-DA3DC18EF9BC14340-022020102-zfc++opW3ruCBegYO4b1Bw%3D%3D; nostalgia_conf=-1; innersign=0; b_lsid=6F8B410CB_180474B25CC; b_ut=7; fingerprint=8811623532fd27bba7948e9371446fa8; buvid_fp=4F8681D8-0FB5-4EE1-9EBE-FB40263F2379143093infoc; SESSDATA=61cf9ff6%2C1666015569%2C9f4f7%2A41; bili_jct=d997ee53f9ecdd771923576531c0fc01; DedeUserID=20686463; DedeUserID__ckMd5=5c3e0bf99a3fb5aa; sid=j3p0200t; CURRENT_FNVAL=80";
     /**
      * 用户个人信息
      */
@@ -180,7 +183,7 @@ public class RequestFactory {
         }
 
         if (path == RequestPath.VIDEO_PATH) {
-            param.put("ps","100");
+            param.put("ps","50");
             param.put("tid",tid);
             param.put("keyword","");
             param.put("order","pubdate");
